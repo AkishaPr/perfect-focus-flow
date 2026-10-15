@@ -89,7 +89,14 @@ interface Actions {
   reset: () => void;
   upsertEvent: (e: CalEvent) => void;
   deleteEvent: (id: string) => void;
+  upsertTask: (t: Task) => void;
+  deleteTask: (id: string) => void;
+  upsertGoal: (g: Goal) => void;
+  deleteGoal: (id: string) => void;
 }
+
+const upsert = <T extends { id: string }>(list: T[], item: T) =>
+  list.some((x) => x.id === item.id) ? list.map((x) => (x.id === item.id ? item : x)) : [...list, item];
 
 export const useStore = create<StoreData & Actions>()(
   persist(
@@ -98,13 +105,21 @@ export const useStore = create<StoreData & Actions>()(
       updateSettings: (patch) => set((s) => ({ settings: { ...s.settings, ...patch } })),
       replaceAll: (data) => set(() => ({ ...data })),
       reset: () => set(() => emptyData()),
-      upsertEvent: (e) =>
-        set((s) => ({
-          events: s.events.some((x) => x.id === e.id)
-            ? s.events.map((x) => (x.id === e.id ? e : x))
-            : [...s.events, e],
-        })),
+      upsertEvent: (e) => set((s) => ({ events: upsert(s.events, e) })),
       deleteEvent: (id) => set((s) => ({ events: s.events.filter((x) => x.id !== id) })),
+      upsertTask: (t) => set((s) => ({ tasks: upsert(s.tasks, t) })),
+      // Removing a task also removes its planned (not completed) blocks.
+      deleteTask: (id) =>
+        set((s) => ({
+          tasks: s.tasks.filter((x) => x.id !== id),
+          blocks: s.blocks.filter((b) => b.taskId !== id || b.status === "done"),
+        })),
+      upsertGoal: (g) => set((s) => ({ goals: upsert(s.goals, g) })),
+      deleteGoal: (id) =>
+        set((s) => ({
+          goals: s.goals.filter((x) => x.id !== id),
+          tasks: s.tasks.map((t) => (t.goalId === id ? { ...t, goalId: undefined } : t)),
+        })),
     }),
     {
       name: "alcc:v1",
