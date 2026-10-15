@@ -1,24 +1,23 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { ComingSoon, PageHeader } from "@/components/AppShell";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
-  component: Index,
+  head: () => ({
+    meta: [
+      { title: "Today — A/L Command Center" },
+      { name: "description", content: "Fixed events, today's plan and your next task." },
+      { property: "og:title", content: "Today — A/L Command Center" },
+      { property: "og:description", content: "Fixed events, today's plan and your next task." },
+    ],
+  }),
+  component: TodayPage,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
-function Index() {
+function TodayPage() {
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
+    <>
+      <PageHeader title="Today" subtitle="Fixed events, today's plan and your next task." />
+      <ComingSoon stage="stage 5" />
+    </>
   );
 }
