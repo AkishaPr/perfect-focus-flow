@@ -8,3 +8,6 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- All app data lives in one persisted Zustand store (src/lib/store.ts, localStorage key alcc:v1) with a zod-validated migrate(); V1 is local-only by design, no backend.
+- Planner logic must stay in pure modules under src/lib/planner/ (no React) so it is unit-testable.
