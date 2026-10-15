@@ -46,7 +46,7 @@ function WeekPage() {
     <>
       <PageHeader
         title="Week"
-        subtitle={`${days[0].toLocaleDateString(undefined, { day: "numeric", month: "short" })} – ${days[6].toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}`}
+        subtitle={`${days[0]!.toLocaleDateString(undefined, { day: "numeric", month: "short" })} – ${days[6]!.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}`}
         action={
           <div className="flex items-center gap-2">
             <Button variant="secondary" size="icon" aria-label="Previous week" onClick={() => setAnchor(addDays(anchor, -7))}><ChevronLeft className="h-4 w-4" /></Button>
