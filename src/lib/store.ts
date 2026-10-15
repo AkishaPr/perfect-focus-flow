@@ -87,6 +87,8 @@ interface Actions {
   updateSettings: (patch: Partial<Settings>) => void;
   replaceAll: (data: StoreData) => void;
   reset: () => void;
+  upsertEvent: (e: CalEvent) => void;
+  deleteEvent: (id: string) => void;
 }
 
 export const useStore = create<StoreData & Actions>()(
@@ -96,6 +98,13 @@ export const useStore = create<StoreData & Actions>()(
       updateSettings: (patch) => set((s) => ({ settings: { ...s.settings, ...patch } })),
       replaceAll: (data) => set(() => ({ ...data })),
       reset: () => set(() => emptyData()),
+      upsertEvent: (e) =>
+        set((s) => ({
+          events: s.events.some((x) => x.id === e.id)
+            ? s.events.map((x) => (x.id === e.id ? e : x))
+            : [...s.events, e],
+        })),
+      deleteEvent: (id) => set((s) => ({ events: s.events.filter((x) => x.id !== id) })),
     }),
     {
       name: "alcc:v1",
