@@ -1,0 +1,169 @@
+From dc8b4a73bcd87dd9462c7fbd554cbf9777e4df22 Mon Sep 17 00:00:00 2001
+From: Claude <claude@example.invalid>
+Date: Thu, 15 Oct 2026 20:48:46 +0000
+Subject: [PATCH 5/6] feat(import): clear import errors, preview skipped
+ entries; require a date for one-time events
+
+- Settings import shows why a file was rejected (not JSON / not a backup / newer version)
+  and lists entries that will be skipped before the user confirms Replace
+- EventDialog no longer lets a one-time event be saved without a date (such an event never
+  appeared on the calendar and is now rejected by the schema on load)
+- Component test for EventDialog validation
+---
+ src/components/EventDialog.tsx |  4 +++-
+ src/routes/settings.tsx        | 41 ++++++++++++++++++++++++++++----
+ src/test/event-dialog.test.tsx | 43 ++++++++++++++++++++++++++++++++++
+ 3 files changed, 82 insertions(+), 6 deletions(-)
+ create mode 100644 src/test/event-dialog.test.tsx
+
+diff --git a/src/components/EventDialog.tsx b/src/components/EventDialog.tsx
+index 51f281d..ee0f061 100644
+--- a/src/components/EventDialog.tsx
++++ b/src/components/EventDialog.tsx
+@@ -36,7 +36,9 @@ export function EventDialog({
+     ? "Add a title."
+     : toMin(e.end) <= toMin(e.start)
+       ? "End must be after start (no crossing midnight)."
+-      : null;
++      : e.recurrence === "none" && !e.date
++        ? "Pick a date for a one-time event."
++        : null;
+   const set = (p: Partial<CalEvent>) => setE({ ...e, ...p });
+ 
+   return (
+diff --git a/src/routes/settings.tsx b/src/routes/settings.tsx
+index e094d08..59ae5c0 100644
+--- a/src/routes/settings.tsx
++++ b/src/routes/settings.tsx
+@@ -6,7 +6,8 @@ import { PageHeader } from "@/components/AppShell";
+ import { Button } from "@/components/ui/button";
+ import { Input } from "@/components/ui/input";
+ import { Label } from "@/components/ui/label";
+-import { exportData, migrate, useStore, defaultSettings } from "@/lib/store";
++import { exportData, migrateWithReport, useStore, defaultSettings } from "@/lib/store";
++import { InvalidBackupError, describeReport } from "@/lib/schema";
+ import {
+   SUBJECTS,
+   SUBJECT_LABEL,
+@@ -68,6 +69,7 @@ function SettingsPage() {
+   const replaceAll = useStore((s) => s.replaceAll);
+   const fileRef = useRef<HTMLInputElement>(null);
+   const [pending, setPending] = useState<StoreData | null>(null);
++  const [pendingNotes, setPendingNotes] = useState<string[]>([]);
+   const [weak, setWeak] = useState<{ subject: Subject; topic: string }>({
+     subject: "maths",
+     topic: "",
+@@ -90,9 +92,18 @@ function SettingsPage() {
+   const onFile = async (f?: File) => {
+     if (!f) return;
+     try {
+-      setPending(migrate(JSON.parse(await f.text())));
+-    } catch {
+-      toast.error("That file isn't a valid A/L Command Center backup.");
++      const { data, report } = migrateWithReport(JSON.parse(await f.text()));
++      setPending(data);
++      setPendingNotes(describeReport(report));
++    } catch (e) {
++      setPending(null);
++      toast.error(
++        e instanceof InvalidBackupError
++          ? e.message
++          : e instanceof SyntaxError
++            ? "That file isn't valid JSON."
++            : "That file isn't a valid A/L Command Center backup.",
++      );
+     }
+     if (fileRef.current) fileRef.current.value = "";
+   };
+@@ -318,18 +329,38 @@ function SettingsPage() {
+                 {pending.goals.length} goals · {pending.sessions.length} sessions ·{" "}
+                 {pending.marks.length} marks
+               </p>
++              {pendingNotes.length > 0 && (
++                <div className="mb-3 text-muted-foreground">
++                  <p className="font-medium text-foreground">
++                    Some entries can&apos;t be imported:
++                  </p>
++                  <ul className="list-disc pl-5">
++                    {pendingNotes.map((n) => (
++                      <li key={n}>{n}</li>
++                    ))}
++                  </ul>
++                </div>
++              )}
+               <div className="flex gap-2">
+                 <Button
+                   size="sm"
+                   onClick={() => {
+                     replaceAll(pending);
+                     setPending(null);
++                    setPendingNotes([]);
+                     toast.success("Backup restored.");
+                   }}
+                 >
+                   Replace
+                 </Button>
+-                <Button size="sm" variant="ghost" onClick={() => setPending(null)}>
++                <Button
++                  size="sm"
++                  variant="ghost"
++                  onClick={() => {
++                    setPending(null);
++                    setPendingNotes([]);
++                  }}
++                >
+                   Cancel
+                 </Button>
+               </div>
+diff --git a/src/test/event-dialog.test.tsx b/src/test/event-dialog.test.tsx
+new file mode 100644
+index 0000000..3c6b046
+--- /dev/null
++++ b/src/test/event-dialog.test.tsx
+@@ -0,0 +1,43 @@
++import { cleanup, render, screen } from "@testing-library/react";
++import { afterEach, describe, expect, it } from "vitest";
++import { EventDialog } from "@/components/EventDialog";
++import type { CalEvent } from "@/lib/types";
++
++const base: CalEvent = {
++  id: "e1",
++  title: "Physics class",
++  kind: "class",
++  mode: "physical",
++  recurrence: "none",
++  date: "2026-10-20",
++  start: "14:00",
++  end: "16:00",
++};
++
++const open = (e: CalEvent) => render(<EventDialog open onOpenChange={() => {}} initial={e} />);
++
++afterEach(cleanup);
++
++describe("EventDialog validation", () => {
++  it("allows saving a one-time event that has a date", () => {
++    open(base);
++    expect(screen.getByRole("button", { name: "Save" })).toBeEnabled();
++    expect(screen.queryByText(/Pick a date/)).toBeNull();
++  });
++
++  it("blocks a one-time event with no date (it would never show on the calendar)", () => {
++    open({ ...base, date: "" });
++    expect(screen.getByText("Pick a date for a one-time event.")).toBeInTheDocument();
++    expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
++  });
++
++  it("does not require a date for weekly events", () => {
++    open({ ...base, recurrence: "weekly", weekday: 2, date: "" });
++    expect(screen.getByRole("button", { name: "Save" })).toBeEnabled();
++  });
++
++  it("still blocks end before start", () => {
++    open({ ...base, start: "16:00", end: "14:00" });
++    expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
++  });
++});
+-- 
+2.43.0
+
