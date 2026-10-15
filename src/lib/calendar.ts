@@ -1,7 +1,7 @@
 import type { CalEvent, PlanBlock, StudyWindow } from "./types";
 
 export const toMin = (t: string) => {
-  const [h, m] = t.split(":").map(Number);
+  const [h = 0, m = 0] = t.split(":").map(Number);
   return h * 60 + m;
 };
 export const fromMin = (m: number) =>
@@ -43,7 +43,7 @@ export function overlappingIds(evs: CalEvent[]): Set<string> {
   const out = new Set<string>();
   for (let i = 0; i < evs.length; i++)
     for (let j = i + 1; j < evs.length; j++) {
-      const a = evs[i], b = evs[j];
+      const a = evs[i]!, b = evs[j]!;
       if (toMin(a.start) < toMin(b.end) && toMin(b.start) < toMin(a.end)) {
         out.add(a.id);
         out.add(b.id);
