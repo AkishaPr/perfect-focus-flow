@@ -59,12 +59,12 @@ export interface Task {
   topic: string;
   type: TaskType;
   estimateMin: number;
-  deadline?: string;
+  deadline?: string | undefined;
   importance: number;
   splittable: boolean;
   minChunkMin: number;
   status: TaskStatus;
-  goalId?: string;
+  goalId?: string | undefined;
   carryOverCount: number;
   createdAt: string;
 }
