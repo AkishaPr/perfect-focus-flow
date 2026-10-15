@@ -44,7 +44,7 @@ export interface CalEvent {
   title: string;
   kind: "class" | "exam" | "other";
   mode: "online" | "physical";
-  subject?: Subject;
+  subject?: Subject | undefined;
   recurrence: "none" | "weekly";
   date?: string; // yyyy-MM-dd
   weekday?: number;
