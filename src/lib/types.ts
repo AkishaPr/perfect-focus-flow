@@ -6,7 +6,14 @@ export const SUBJECT_LABEL: Record<Subject, string> = {
   ict: "ICT",
 };
 
-export const TASK_TYPES = ["homework", "paper", "revision", "chapter", "recording", "other"] as const;
+export const TASK_TYPES = [
+  "homework",
+  "paper",
+  "revision",
+  "chapter",
+  "recording",
+  "other",
+] as const;
 export type TaskType = (typeof TASK_TYPES)[number];
 export type TaskStatus = "todo" | "in_progress" | "done" | "missed" | "deferred";
 
@@ -67,6 +74,8 @@ export interface Task {
   goalId?: string | undefined;
   carryOverCount: number;
   createdAt: string;
+  /** ISO timestamp set when the task is marked done. */
+  completedAt?: string | undefined;
 }
 
 export interface Goal {
