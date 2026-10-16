@@ -1,6 +1,6 @@
 import { create } from "zustand";
-import { persist, type PersistStorage } from "zustand/middleware";
-import { describeReport, isCleanReport, sanitizeStoreData, type MigrationReport } from "./schema";
+import { persist, createJSONStorage } from "zustand/middleware";
+import { z } from "zod";
 import type { CalEvent, Goal, Settings, StoreData, Task } from "./types";
 
 export const STORE_VERSION = 1;
@@ -37,19 +37,50 @@ const emptyData = (): StoreData => ({
   marks: [],
 });
 
-/**
- * Validate and upgrade raw data (a stored state or an imported backup) to the current shape.
- * Throws `InvalidBackupError` if it is clearly not a backup; otherwise bad entries are skipped
- * or repaired and described in the returned report. Per-version upgrade steps for future
- * `STORE_VERSION` bumps belong here, before `sanitizeStoreData`.
- */
-export function migrateWithReport(raw: unknown): { data: StoreData; report: MigrationReport } {
-  return sanitizeStoreData(raw, emptyData(), STORE_VERSION);
-}
+const time = z.string().regex(/^\d{2}:\d{2}$/);
+const subject = z.enum(["maths", "physics", "ict"]);
 
-/** Same as `migrateWithReport` when you only need the data. */
+export const storeSchema = z.object({
+  version: z.number(),
+  settings: z.object({
+    timezone: z.string(),
+    wake: time,
+    sleep: time,
+    studyWindows: z.array(z.object({ day: z.number().min(0).max(6), start: time, end: time })),
+    focusMin: z.number(),
+    breakMin: z.number(),
+    maxDailyStudyMin: z.number(),
+    dailyGoalMin: z.number(),
+    weeklyGoalMin: z.number(),
+    weights: z.object({
+      deadline: z.number(),
+      overdue: z.number(),
+      importance: z.number(),
+      weakTopic: z.number(),
+      goal: z.number(),
+      carryOver: z.number(),
+    }),
+    weakTopics: z.array(z.object({ subject, topic: z.string() })),
+  }),
+  events: z.array(z.any()),
+  tasks: z.array(z.any()),
+  goals: z.array(z.any()),
+  blocks: z.array(z.any()),
+  sessions: z.array(z.any()),
+  marks: z.array(z.any()),
+});
+
+/** Upgrade older backups to the current shape. */
 export function migrate(raw: unknown): StoreData {
-  return migrateWithReport(raw).data;
+  const obj = (raw ?? {}) as Partial<StoreData>;
+  const base = emptyData();
+  const merged = {
+    ...base,
+    ...obj,
+    settings: { ...base.settings, ...(obj.settings ?? {}) },
+    version: STORE_VERSION,
+  };
+  return storeSchema.parse(merged) as StoreData;
 }
 
 interface Actions {
@@ -65,78 +96,7 @@ interface Actions {
 }
 
 const upsert = <T extends { id: string }>(list: T[], item: T) =>
-  list.some((x) => x.id === item.id)
-    ? list.map((x) => (x.id === item.id ? item : x))
-    : [...list, item];
-
-export const STORAGE_KEY = "alcc:v1";
-/** Raw copy of data that could not be loaded cleanly, kept so nothing is silently lost. */
-export const BACKUP_KEY = "alcc:v1:backup";
-
-export interface RecoveryNotice {
-  reason: "corrupt" | "invalid" | "repaired";
-  details: string[];
-}
-
-let pendingNotice: RecoveryNotice | null = null;
-
-function saveBackup(raw: string) {
-  try {
-    localStorage.setItem(BACKUP_KEY, raw);
-  } catch (e) {
-    console.error("Could not keep a copy of the unreadable data", e);
-  }
-}
-
-/** The raw data saved by the last recovery, or null. */
-export function getBackupRaw(): string | null {
-  try {
-    return typeof localStorage === "undefined" ? null : localStorage.getItem(BACKUP_KEY);
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Storage that never throws into the app: unreadable JSON is backed up and treated as empty, and a
- * failed write (quota, private mode) is logged instead of crashing the UI.
- */
-const safeStorage = {
-  getItem: (name: string) => {
-    if (typeof localStorage === "undefined") return null;
-    let raw: string | null;
-    try {
-      raw = localStorage.getItem(name);
-    } catch {
-      return null;
-    }
-    if (raw === null) return null;
-    try {
-      return JSON.parse(raw);
-    } catch {
-      saveBackup(raw);
-      pendingNotice = {
-        reason: "corrupt",
-        details: ["The saved data in this browser was not valid JSON."],
-      };
-      return null;
-    }
-  },
-  setItem: (name: string, value: unknown) => {
-    try {
-      localStorage.setItem(name, JSON.stringify(value));
-    } catch (e) {
-      console.error("Could not save A/L Command Center data", e);
-    }
-  },
-  removeItem: (name: string) => {
-    try {
-      localStorage.removeItem(name);
-    } catch {
-      /* ignore */
-    }
-  },
-} as PersistStorage<StoreData & Actions>;
+  list.some((x) => x.id === item.id) ? list.map((x) => (x.id === item.id ? item : x)) : [...list, item];
 
 export const useStore = create<StoreData & Actions>()(
   persist(
@@ -162,31 +122,11 @@ export const useStore = create<StoreData & Actions>()(
         })),
     }),
     {
-      name: STORAGE_KEY,
+      name: "alcc:v1",
       version: STORE_VERSION,
-      storage: safeStorage,
+      storage: createJSONStorage(() => localStorage),
       skipHydration: true,
-      // Zustand only calls `migrate` when the stored version differs, so it can't be the safety net.
-      // Validation runs on every load in `merge` below, which calls our zod-validated migrate().
-      migrate: (persisted) => persisted as StoreData & Actions,
-      merge: (persisted, current) => {
-        if (persisted === undefined || persisted === null) return current;
-        try {
-          const { data, report } = migrateWithReport(persisted);
-          if (!isCleanReport(report)) {
-            saveBackup(JSON.stringify(persisted));
-            pendingNotice = { reason: "repaired", details: describeReport(report) };
-          }
-          return { ...current, ...data };
-        } catch (e) {
-          saveBackup(JSON.stringify(persisted));
-          pendingNotice = {
-            reason: "invalid",
-            details: [e instanceof Error ? e.message : "The saved data could not be used."],
-          };
-          return current;
-        }
-      },
+      migrate: (state) => migrate(state),
     },
   ),
 );
@@ -203,19 +143,6 @@ export function exportData(): StoreData {
     sessions: s.sessions,
     marks: s.marks,
   };
-}
-
-/**
- * Load saved data into the store (call once on the client). Resolves with a notice if anything had
- * to be skipped, repaired or reset, so the UI can tell the user; the raw original is in BACKUP_KEY.
- */
-export async function hydrateStore(): Promise<RecoveryNotice | null> {
-  await useStore.persist.rehydrate();
-  const notice = pendingNotice;
-  pendingNotice = null;
-  // Write the repaired state back so the same problem is not reported on every reload.
-  if (notice) useStore.setState({});
-  return notice;
 }
 
 export const uid = () => crypto.randomUUID();

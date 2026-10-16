@@ -6,14 +6,7 @@ import { Button } from "@/components/ui/button";
 import { STATUS_LABEL, TaskDialog, blankTask } from "@/components/TaskDialog";
 import { useStore } from "@/lib/store";
 import { ymd } from "@/lib/calendar";
-import {
-  SUBJECTS,
-  SUBJECT_LABEL,
-  TASK_TYPES,
-  type Subject,
-  type Task,
-  type TaskStatus,
-} from "@/lib/types";
+import { SUBJECTS, SUBJECT_LABEL, TASK_TYPES, type Subject, type Task, type TaskStatus } from "@/lib/types";
 
 export const Route = createFileRoute("/tasks")({
   head: () => ({
@@ -21,10 +14,7 @@ export const Route = createFileRoute("/tasks")({
       { title: "Tasks — A/L Command Center" },
       { name: "description", content: "Homework, papers, revision, chapters and recordings." },
       { property: "og:title", content: "Tasks — A/L Command Center" },
-      {
-        property: "og:description",
-        content: "Homework, papers, revision, chapters and recordings.",
-      },
+      { property: "og:description", content: "Homework, papers, revision, chapters and recordings." },
     ],
   }),
   component: TasksPage,
@@ -48,11 +38,7 @@ function TasksPage() {
         .filter((t) => !subject || t.subject === subject)
         .filter((t) => !type || t.type === type)
         .filter((t) => (status === "open" ? t.status !== "done" : !status || t.status === status))
-        .sort(
-          (a, b) =>
-            (a.deadline ?? "9999").localeCompare(b.deadline ?? "9999") ||
-            b.importance - a.importance,
-        ),
+        .sort((a, b) => (a.deadline ?? "9999").localeCompare(b.deadline ?? "9999") || b.importance - a.importance),
     [tasks, subject, type, status],
   );
 
@@ -61,52 +47,21 @@ function TasksPage() {
       <PageHeader
         title="Tasks"
         subtitle={`${tasks.filter((t) => t.status !== "done").length} open · ${tasks.filter((t) => t.status === "done").length} done`}
-        action={
-          <Button onClick={() => setEditing(blankTask())}>
-            <Plus className="h-4 w-4" /> Task
-          </Button>
-        }
+        action={<Button onClick={() => setEditing(blankTask())}><Plus className="h-4 w-4" /> Task</Button>}
       />
       <div className="mb-4 flex flex-wrap gap-2">
-        <select
-          className={sel}
-          value={subject}
-          onChange={(e) => setSubject(e.target.value)}
-          aria-label="Subject"
-        >
+        <select className={sel} value={subject} onChange={(e) => setSubject(e.target.value)} aria-label="Subject">
           <option value="">All subjects</option>
-          {SUBJECTS.map((s) => (
-            <option key={s} value={s}>
-              {SUBJECT_LABEL[s]}
-            </option>
-          ))}
+          {SUBJECTS.map((s) => <option key={s} value={s}>{SUBJECT_LABEL[s]}</option>)}
         </select>
-        <select
-          className={sel}
-          value={type}
-          onChange={(e) => setType(e.target.value)}
-          aria-label="Type"
-        >
+        <select className={sel} value={type} onChange={(e) => setType(e.target.value)} aria-label="Type">
           <option value="">All types</option>
-          {TASK_TYPES.map((x) => (
-            <option key={x} value={x}>
-              {x}
-            </option>
-          ))}
+          {TASK_TYPES.map((x) => <option key={x} value={x}>{x}</option>)}
         </select>
-        <select
-          className={sel}
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-          aria-label="Status"
-        >
+        <select className={sel} value={status} onChange={(e) => setStatus(e.target.value)} aria-label="Status">
           <option value="open">Open</option>
           <option value="">All</option>
-          {(Object.keys(STATUS_LABEL) as TaskStatus[]).map((x) => (
-            <option key={x} value={x}>
-              {STATUS_LABEL[x]}
-            </option>
-          ))}
+          {(Object.keys(STATUS_LABEL) as TaskStatus[]).map((x) => <option key={x} value={x}>{STATUS_LABEL[x]}</option>)}
         </select>
       </div>
 
@@ -128,40 +83,22 @@ function TasksPage() {
                   {t.status === "done" && <Check className="h-3.5 w-3.5" />}
                 </button>
                 <button className="min-w-0 flex-1 text-left" onClick={() => setEditing(t)}>
-                  <div
-                    className={`truncate text-sm font-medium ${t.status === "done" ? "text-muted-foreground line-through" : ""}`}
-                  >
-                    {t.title}
-                  </div>
+                  <div className={`truncate text-sm font-medium ${t.status === "done" ? "text-muted-foreground line-through" : ""}`}>{t.title}</div>
                   <div className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
                     <span className={`h-2 w-2 rounded-full ${DOT[t.subject]}`} />
-                    <span>
-                      {SUBJECT_LABEL[t.subject]}
-                      {t.topic && ` · ${t.topic}`}
-                    </span>
+                    <span>{SUBJECT_LABEL[t.subject]}{t.topic && ` · ${t.topic}`}</span>
                     <span className="capitalize">· {t.type}</span>
                     <span>· {t.estimateMin} min</span>
-                    {t.carryOverCount > 0 && (
-                      <span className="text-warning">· carried ×{t.carryOverCount}</span>
-                    )}
+                    {t.carryOverCount > 0 && <span className="text-warning">· carried ×{t.carryOverCount}</span>}
                   </div>
                 </button>
                 <div className="hidden text-right text-xs sm:block">
                   <div className={overdue ? "text-destructive" : "text-muted-foreground"}>
-                    {t.deadline
-                      ? overdue
-                        ? `Overdue · ${t.deadline}`
-                        : t.deadline
-                      : "No deadline"}
+                    {t.deadline ? (overdue ? `Overdue · ${t.deadline}` : t.deadline) : "No deadline"}
                   </div>
-                  <div className="text-muted-foreground">
-                    {"●".repeat(t.importance)}
-                    <span className="opacity-30">{"●".repeat(5 - t.importance)}</span>
-                  </div>
+                  <div className="text-muted-foreground">{"●".repeat(t.importance)}<span className="opacity-30">{"●".repeat(5 - t.importance)}</span></div>
                 </div>
-                <span className="rounded-full border px-2 py-0.5 text-[11px] text-muted-foreground">
-                  {STATUS_LABEL[t.status]}
-                </span>
+                <span className="rounded-full border px-2 py-0.5 text-[11px] text-muted-foreground">{STATUS_LABEL[t.status]}</span>
               </li>
             );
           })}

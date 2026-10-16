@@ -36,16 +36,14 @@ export function eventsOn(events: CalEvent[], date: Date): CalEvent[] {
 export const windowsOn = (windows: StudyWindow[], date: Date) =>
   windows.filter((w) => w.day === date.getDay());
 
-export const blocksOn = (blocks: PlanBlock[], date: Date) =>
-  blocks.filter((b) => b.date === ymd(date));
+export const blocksOn = (blocks: PlanBlock[], date: Date) => blocks.filter((b) => b.date === ymd(date));
 
 /** Ids of events that overlap another event on the same day. */
 export function overlappingIds(evs: CalEvent[]): Set<string> {
   const out = new Set<string>();
   for (let i = 0; i < evs.length; i++)
     for (let j = i + 1; j < evs.length; j++) {
-      const a = evs[i]!,
-        b = evs[j]!;
+      const a = evs[i]!, b = evs[j]!;
       if (toMin(a.start) < toMin(b.end) && toMin(b.start) < toMin(a.end)) {
         out.add(a.id);
         out.add(b.id);

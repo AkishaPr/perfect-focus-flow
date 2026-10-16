@@ -1,12 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { uid, useStore } from "@/lib/store";
@@ -36,9 +30,7 @@ export function EventDialog({
     ? "Add a title."
     : toMin(e.end) <= toMin(e.start)
       ? "End must be after start (no crossing midnight)."
-      : e.recurrence === "none" && !e.date
-        ? "Pick a date for a one-time event."
-        : null;
+      : null;
   const set = (p: Partial<CalEvent>) => setE({ ...e, ...p });
 
   return (
@@ -50,20 +42,11 @@ export function EventDialog({
         <div className="grid grid-cols-2 gap-3">
           <div className="col-span-2 space-y-1.5">
             <Label>Title</Label>
-            <Input
-              autoFocus
-              value={e.title}
-              onChange={(x) => set({ title: x.target.value })}
-              placeholder="e.g. Physics theory class"
-            />
+            <Input autoFocus value={e.title} onChange={(x) => set({ title: x.target.value })} placeholder="e.g. Physics theory class" />
           </div>
           <div className="space-y-1.5">
             <Label>Type</Label>
-            <select
-              className={sel}
-              value={e.kind}
-              onChange={(x) => set({ kind: x.target.value as CalEvent["kind"] })}
-            >
+            <select className={sel} value={e.kind} onChange={(x) => set({ kind: x.target.value as CalEvent["kind"] })}>
               <option value="class">Class</option>
               <option value="exam">Exam</option>
               <option value="other">Other</option>
@@ -71,30 +54,16 @@ export function EventDialog({
           </div>
           <div className="space-y-1.5">
             <Label>Mode</Label>
-            <select
-              className={sel}
-              value={e.mode}
-              onChange={(x) => set({ mode: x.target.value as CalEvent["mode"] })}
-            >
+            <select className={sel} value={e.mode} onChange={(x) => set({ mode: x.target.value as CalEvent["mode"] })}>
               <option value="physical">Physical</option>
               <option value="online">Online</option>
             </select>
           </div>
           <div className="space-y-1.5">
             <Label>Subject</Label>
-            <select
-              className={sel}
-              value={e.subject ?? ""}
-              onChange={(x) =>
-                set({ subject: (x.target.value || undefined) as CalEvent["subject"] })
-              }
-            >
+            <select className={sel} value={e.subject ?? ""} onChange={(x) => set({ subject: (x.target.value || undefined) as CalEvent["subject"] })}>
               <option value="">None</option>
-              {SUBJECTS.map((s) => (
-                <option key={s} value={s}>
-                  {SUBJECT_LABEL[s]}
-                </option>
-              ))}
+              {SUBJECTS.map((s) => <option key={s} value={s}>{SUBJECT_LABEL[s]}</option>)}
             </select>
           </div>
           <div className="space-y-1.5">
@@ -104,14 +73,7 @@ export function EventDialog({
               value={e.recurrence}
               onChange={(x) => {
                 const r = x.target.value as CalEvent["recurrence"];
-                set(
-                  r === "weekly"
-                    ? {
-                        recurrence: r,
-                        weekday: e.weekday ?? new Date(e.date ?? Date.now()).getDay(),
-                      }
-                    : { recurrence: r, date: e.date ?? "" },
-                );
+                set(r === "weekly" ? { recurrence: r, weekday: e.weekday ?? new Date(e.date ?? Date.now()).getDay() } : { recurrence: r, date: e.date ?? "" });
               }}
             >
               <option value="weekly">Every week</option>
@@ -122,26 +84,14 @@ export function EventDialog({
             {e.recurrence === "weekly" ? (
               <>
                 <Label>Day</Label>
-                <select
-                  className={sel}
-                  value={e.weekday ?? 1}
-                  onChange={(x) => set({ weekday: Number(x.target.value) })}
-                >
-                  {DAYS.map((d, i) => (
-                    <option key={d} value={i}>
-                      {d}
-                    </option>
-                  ))}
+                <select className={sel} value={e.weekday ?? 1} onChange={(x) => set({ weekday: Number(x.target.value) })}>
+                  {DAYS.map((d, i) => <option key={d} value={i}>{d}</option>)}
                 </select>
               </>
             ) : (
               <>
                 <Label>Date</Label>
-                <Input
-                  type="date"
-                  value={e.date ?? ""}
-                  onChange={(x) => set({ date: x.target.value })}
-                />
+                <Input type="date" value={e.date ?? ""} onChange={(x) => set({ date: x.target.value })} />
               </>
             )}
           </div>
@@ -157,29 +107,12 @@ export function EventDialog({
         {err && <p className="text-xs text-destructive">{err}</p>}
         <DialogFooter className="gap-2">
           {!isNew && (
-            <Button
-              variant="ghost"
-              className="mr-auto text-destructive"
-              onClick={() => {
-                del(e.id);
-                onOpenChange(false);
-              }}
-            >
+            <Button variant="ghost" className="mr-auto text-destructive" onClick={() => { del(e.id); onOpenChange(false); }}>
               Delete
             </Button>
           )}
-          <Button variant="secondary" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button
-            disabled={!!err}
-            onClick={() => {
-              upsert({ ...e, title: e.title.trim() });
-              onOpenChange(false);
-            }}
-          >
-            Save
-          </Button>
+          <Button variant="secondary" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button disabled={!!err} onClick={() => { upsert({ ...e, title: e.title.trim() }); onOpenChange(false); }}>Save</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

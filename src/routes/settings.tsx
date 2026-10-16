@@ -6,30 +6,16 @@ import { PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { exportData, migrateWithReport, useStore, defaultSettings } from "@/lib/store";
-import { InvalidBackupError, describeReport } from "@/lib/schema";
-import {
-  SUBJECTS,
-  SUBJECT_LABEL,
-  type Settings,
-  type StoreData,
-  type Subject,
-  type Weights,
-} from "@/lib/types";
+import { exportData, migrate, useStore, defaultSettings } from "@/lib/store";
+import { SUBJECTS, SUBJECT_LABEL, type Settings, type StoreData, type Subject, type Weights } from "@/lib/types";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({
     meta: [
       { title: "Settings — A/L Command Center" },
-      {
-        name: "description",
-        content: "Study windows, focus length, goals, scoring weights and backups.",
-      },
+      { name: "description", content: "Study windows, focus length, goals, scoring weights and backups." },
       { property: "og:title", content: "Settings — A/L Command Center" },
-      {
-        property: "og:description",
-        content: "Study windows, focus length, goals, scoring weights and backups.",
-      },
+      { property: "og:description", content: "Study windows, focus length, goals, scoring weights and backups." },
     ],
   }),
   component: SettingsPage,
@@ -69,11 +55,7 @@ function SettingsPage() {
   const replaceAll = useStore((s) => s.replaceAll);
   const fileRef = useRef<HTMLInputElement>(null);
   const [pending, setPending] = useState<StoreData | null>(null);
-  const [pendingNotes, setPendingNotes] = useState<string[]>([]);
-  const [weak, setWeak] = useState<{ subject: Subject; topic: string }>({
-    subject: "maths",
-    topic: "",
-  });
+  const [weak, setWeak] = useState<{ subject: Subject; topic: string }>({ subject: "maths", topic: "" });
 
   const num = (k: keyof Settings) => (e: React.ChangeEvent<HTMLInputElement>) =>
     update({ [k]: Math.max(0, Number(e.target.value) || 0) } as Partial<Settings>);
@@ -92,18 +74,9 @@ function SettingsPage() {
   const onFile = async (f?: File) => {
     if (!f) return;
     try {
-      const { data, report } = migrateWithReport(JSON.parse(await f.text()));
-      setPending(data);
-      setPendingNotes(describeReport(report));
-    } catch (e) {
-      setPending(null);
-      toast.error(
-        e instanceof InvalidBackupError
-          ? e.message
-          : e instanceof SyntaxError
-            ? "That file isn't valid JSON."
-            : "That file isn't a valid A/L Command Center backup.",
-      );
+      setPending(migrate(JSON.parse(await f.text())));
+    } catch {
+      toast.error("That file isn't a valid A/L Command Center backup.");
     }
     if (fileRef.current) fileRef.current.value = "";
   };
@@ -115,18 +88,10 @@ function SettingsPage() {
         <Section title="Routine">
           <div className="grid grid-cols-2 gap-4">
             <Field label="Wake time">
-              <Input
-                type="time"
-                value={settings.wake}
-                onChange={(e) => update({ wake: e.target.value })}
-              />
+              <Input type="time" value={settings.wake} onChange={(e) => update({ wake: e.target.value })} />
             </Field>
             <Field label="Sleep time">
-              <Input
-                type="time"
-                value={settings.sleep}
-                onChange={(e) => update({ sleep: e.target.value })}
-              />
+              <Input type="time" value={settings.sleep} onChange={(e) => update({ sleep: e.target.value })} />
             </Field>
             <Field label="Focus block (min)">
               <Input type="number" value={settings.focusMin} onChange={num("focusMin")} />
@@ -135,17 +100,10 @@ function SettingsPage() {
               <Input type="number" value={settings.breakMin} onChange={num("breakMin")} />
             </Field>
             <Field label="Max study per day (min)">
-              <Input
-                type="number"
-                value={settings.maxDailyStudyMin}
-                onChange={num("maxDailyStudyMin")}
-              />
+              <Input type="number" value={settings.maxDailyStudyMin} onChange={num("maxDailyStudyMin")} />
             </Field>
             <Field label="Timezone">
-              <Input
-                value={settings.timezone}
-                onChange={(e) => update({ timezone: e.target.value })}
-              />
+              <Input value={settings.timezone} onChange={(e) => update({ timezone: e.target.value })} />
             </Field>
             <Field label="Daily goal (min)">
               <Input type="number" value={settings.dailyGoalMin} onChange={num("dailyGoalMin")} />
@@ -164,12 +122,7 @@ function SettingsPage() {
                   type="number"
                   value={settings.weights[k]}
                   onChange={(e) =>
-                    update({
-                      weights: {
-                        ...settings.weights,
-                        [k]: Math.max(0, Number(e.target.value) || 0),
-                      },
-                    })
+                    update({ weights: { ...settings.weights, [k]: Math.max(0, Number(e.target.value) || 0) } })
                   }
                 />
               </Field>
@@ -177,11 +130,7 @@ function SettingsPage() {
           </div>
           <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
             <span>Total: {Object.values(settings.weights).reduce((a, b) => a + b, 0)}</span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => update({ weights: defaultSettings().weights })}
-            >
+            <Button variant="ghost" size="sm" onClick={() => update({ weights: defaultSettings().weights })}>
               Reset weights
             </Button>
           </div>
@@ -201,9 +150,7 @@ function SettingsPage() {
                   }}
                 >
                   {DAYS.map((d, di) => (
-                    <option key={d} value={di}>
-                      {d}
-                    </option>
+                    <option key={d} value={di}>{d}</option>
                   ))}
                 </select>
                 {(["start", "end"] as const).map((k) => (
@@ -222,9 +169,7 @@ function SettingsPage() {
                   variant="ghost"
                   size="icon"
                   aria-label="Remove window"
-                  onClick={() =>
-                    update({ studyWindows: settings.studyWindows.filter((_, j) => j !== i) })
-                  }
+                  onClick={() => update({ studyWindows: settings.studyWindows.filter((_, j) => j !== i) })}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -232,19 +177,13 @@ function SettingsPage() {
             ))}
           </div>
           {windowsErr && (
-            <p className="mt-2 text-xs text-destructive">
-              A window must end after it starts (no crossing midnight).
-            </p>
+            <p className="mt-2 text-xs text-destructive">A window must end after it starts (no crossing midnight).</p>
           )}
           <Button
             variant="secondary"
             size="sm"
             className="mt-3"
-            onClick={() =>
-              update({
-                studyWindows: [...settings.studyWindows, { day: 1, start: "16:00", end: "18:00" }],
-              })
-            }
+            onClick={() => update({ studyWindows: [...settings.studyWindows, { day: 1, start: "16:00", end: "18:00" }] })}
           >
             <Plus className="h-4 w-4" /> Add window
           </Button>
@@ -252,16 +191,12 @@ function SettingsPage() {
 
         <Section title="Weak topics">
           <div className="mb-3 flex flex-wrap gap-2">
-            {settings.weakTopics.length === 0 && (
-              <p className="text-sm text-muted-foreground">None yet.</p>
-            )}
+            {settings.weakTopics.length === 0 && <p className="text-sm text-muted-foreground">None yet.</p>}
             {settings.weakTopics.map((t, i) => (
               <button
                 key={i}
                 className="rounded-full border px-3 py-1 text-xs hover:border-destructive"
-                onClick={() =>
-                  update({ weakTopics: settings.weakTopics.filter((_, j) => j !== i) })
-                }
+                onClick={() => update({ weakTopics: settings.weakTopics.filter((_, j) => j !== i) })}
                 title="Remove"
               >
                 {SUBJECT_LABEL[t.subject]} · {t.topic} ×
@@ -273,9 +208,7 @@ function SettingsPage() {
             onSubmit={(e) => {
               e.preventDefault();
               if (!weak.topic.trim()) return;
-              update({
-                weakTopics: [...settings.weakTopics, { ...weak, topic: weak.topic.trim() }],
-              });
+              update({ weakTopics: [...settings.weakTopics, { ...weak, topic: weak.topic.trim() }] });
               setWeak({ ...weak, topic: "" });
             }}
           >
@@ -285,84 +218,43 @@ function SettingsPage() {
               onChange={(e) => setWeak({ ...weak, subject: e.target.value as Subject })}
             >
               {SUBJECTS.map((s) => (
-                <option key={s} value={s}>
-                  {SUBJECT_LABEL[s]}
-                </option>
+                <option key={s} value={s}>{SUBJECT_LABEL[s]}</option>
               ))}
             </select>
-            <Input
-              placeholder="e.g. Vectors"
-              value={weak.topic}
-              onChange={(e) => setWeak({ ...weak, topic: e.target.value })}
-            />
-            <Button type="submit" variant="secondary">
-              Add
-            </Button>
+            <Input placeholder="e.g. Vectors" value={weak.topic} onChange={(e) => setWeak({ ...weak, topic: e.target.value })} />
+            <Button type="submit" variant="secondary">Add</Button>
           </form>
         </Section>
 
         <Section title="Backup">
           <p className="mb-4 text-sm text-muted-foreground">
-            Your data lives only in this browser. It does not sync between devices and is lost if
-            you clear site data. Export regularly.
+            Your data lives only in this browser. It does not sync between devices and is lost if you clear site data. Export regularly.
           </p>
           <div className="flex flex-wrap gap-2">
-            <Button onClick={doExport}>
-              <Download className="h-4 w-4" /> Export JSON
-            </Button>
+            <Button onClick={doExport}><Download className="h-4 w-4" /> Export JSON</Button>
             <Button variant="secondary" onClick={() => fileRef.current?.click()}>
               <Upload className="h-4 w-4" /> Import JSON
             </Button>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="application/json"
-              className="hidden"
-              onChange={(e) => onFile(e.target.files?.[0])}
-            />
+            <input ref={fileRef} type="file" accept="application/json" className="hidden" onChange={(e) => onFile(e.target.files?.[0])} />
           </div>
           {pending && (
             <div className="mt-4 rounded-md border border-warning/50 bg-warning/10 p-4 text-sm">
               <p className="mb-2 font-medium">Replace all current data with this backup?</p>
               <p className="mb-3 text-muted-foreground">
-                {pending.tasks.length} tasks · {pending.events.length} events ·{" "}
-                {pending.goals.length} goals · {pending.sessions.length} sessions ·{" "}
-                {pending.marks.length} marks
+                {pending.tasks.length} tasks · {pending.events.length} events · {pending.goals.length} goals · {pending.sessions.length} sessions · {pending.marks.length} marks
               </p>
-              {pendingNotes.length > 0 && (
-                <div className="mb-3 text-muted-foreground">
-                  <p className="font-medium text-foreground">
-                    Some entries can&apos;t be imported:
-                  </p>
-                  <ul className="list-disc pl-5">
-                    {pendingNotes.map((n) => (
-                      <li key={n}>{n}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
               <div className="flex gap-2">
                 <Button
                   size="sm"
                   onClick={() => {
                     replaceAll(pending);
                     setPending(null);
-                    setPendingNotes([]);
                     toast.success("Backup restored.");
                   }}
                 >
                   Replace
                 </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => {
-                    setPending(null);
-                    setPendingNotes([]);
-                  }}
-                >
-                  Cancel
-                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setPending(null)}>Cancel</Button>
               </div>
             </div>
           )}

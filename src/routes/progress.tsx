@@ -7,10 +7,7 @@ export const Route = createFileRoute("/progress")({
       { title: "Progress — A/L Command Center" },
       { name: "description", content: "Study time, completed and missed work, paper marks." },
       { property: "og:title", content: "Progress — A/L Command Center" },
-      {
-        property: "og:description",
-        content: "Study time, completed and missed work, paper marks.",
-      },
+      { property: "og:description", content: "Study time, completed and missed work, paper marks." },
     ],
   }),
   component: ProgressPage,
