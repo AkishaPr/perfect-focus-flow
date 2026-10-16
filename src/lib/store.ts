@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { z } from "zod";
-import type { CalEvent, Settings, StoreData } from "./types";
+import type { CalEvent, Goal, Settings, StoreData, Task } from "./types";
 
 export const STORE_VERSION = 1;
 
