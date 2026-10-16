@@ -1,4 +1,3 @@
-++ b/src/test/migrate.test.ts
 import { describe, expect, it } from "vitest";
 import { defaultSettings, migrate, migrateWithReport, STORE_VERSION } from "@/lib/store";
 import { InvalidBackupError, describeReport, isCleanReport } from "@/lib/schema";

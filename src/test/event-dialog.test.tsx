@@ -1,4 +1,3 @@
-++ b/src/test/event-dialog.test.tsx
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { EventDialog } from "@/components/EventDialog";
