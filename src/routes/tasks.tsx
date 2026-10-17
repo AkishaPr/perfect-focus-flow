@@ -31,7 +31,27 @@ export const Route = createFileRoute("/tasks")({
 });
 
 const DOT: Record<Subject, string> = { maths: "bg-maths", physics: "bg-physics", ict: "bg-ict" };
-const sel = "h-9 rounded-md border bg-input/30 px-2 text-sm capitalize";
+const sel =
+  "h-9 cursor-pointer rounded-full border bg-card px-3 text-sm capitalize focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring";
+
+// Every status has a text label as well as a style, so colour is never the only signal.
+const STATUS_STYLE: Record<TaskStatus, string> = {
+  todo: "bg-muted text-muted-foreground",
+  in_progress: "bg-signal font-medium text-signal-foreground",
+  done: "bg-primary text-primary-foreground",
+  missed: "border border-destructive/50 text-destructive",
+  deferred: "border text-muted-foreground",
+};
+
+function Importance({ value }: { value: number }) {
+  const filled = Math.min(5, Math.max(0, value));
+  return (
+    <span role="img" aria-label={`Importance ${filled} of 5`}>
+      {"●".repeat(filled)}
+      <span className="opacity-30">{"●".repeat(5 - filled)}</span>
+    </span>
+  );
+}
 
 function TasksPage() {
   const tasks = useStore((s) => s.tasks);
@@ -63,7 +83,7 @@ function TasksPage() {
         subtitle={`${tasks.filter((t) => t.status !== "done").length} open · ${tasks.filter((t) => t.status === "done").length} done`}
         action={
           <Button onClick={() => setEditing(blankTask())}>
-            <Plus className="h-4 w-4" /> Task
+            <Plus className="h-4 w-4" /> Add task
           </Button>
         }
       />
@@ -111,34 +131,40 @@ function TasksPage() {
       </div>
 
       {list.length === 0 ? (
-        <div className="rounded-lg border border-dashed p-10 text-center text-sm text-muted-foreground">
+        <div className="rounded-xl border border-dashed bg-card p-10 text-center text-sm text-muted-foreground">
           No tasks here. Add homework, a past paper or a missed recording.
         </div>
       ) : (
-        <ul className="divide-y rounded-lg border bg-card">
+        <ul className="divide-y rounded-xl border bg-card shadow-xs">
           {list.map((t) => {
             const overdue = t.deadline && t.deadline < today && t.status !== "done";
             return (
-              <li key={t.id} className="flex items-center gap-3 px-4 py-3">
+              <li key={t.id} className="flex items-center gap-3 px-4 py-3.5">
                 <button
                   aria-label={t.status === "done" ? "Mark not done" : "Mark done"}
                   onClick={() => upsert({ ...t, status: t.status === "done" ? "todo" : "done" })}
-                  className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border ${t.status === "done" ? "border-success bg-success text-background" : "hover:border-primary"}`}
+                  className={`flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center rounded-full border-[1.5px] transition-colors ${t.status === "done" ? "border-success bg-success text-background" : "border-foreground/60 hover:border-foreground"}`}
                 >
-                  {t.status === "done" && <Check className="h-3.5 w-3.5" />}
+                  {t.status === "done" && <Check className="h-3 w-3" />}
                 </button>
-                <button className="min-w-0 flex-1 text-left" onClick={() => setEditing(t)}>
+                <button
+                  className="min-w-0 flex-1 cursor-pointer text-left"
+                  onClick={() => setEditing(t)}
+                >
                   <div
                     className={`truncate text-sm font-medium ${t.status === "done" ? "text-muted-foreground line-through" : ""}`}
                   >
                     {t.title}
                   </div>
-                  <div className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
-                    <span className={`h-2 w-2 rounded-full ${DOT[t.subject]}`} />
-                    <span>
+                  <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                    <span className="inline-flex items-center gap-1.5 rounded-md bg-muted px-2 py-0.5 text-foreground/80">
+                      <span
+                        className={`h-2 w-2 rounded-full ${DOT[t.subject]}`}
+                        aria-hidden="true"
+                      />
                       {SUBJECT_LABEL[t.subject]}
-                      {t.topic && ` · ${t.topic}`}
                     </span>
+                    {t.topic && <span>· {t.topic}</span>}
                     <span className="capitalize">· {t.type}</span>
                     <span>· {t.estimateMin} min</span>
                     {t.carryOverCount > 0 && (
@@ -147,19 +173,22 @@ function TasksPage() {
                   </div>
                 </button>
                 <div className="hidden text-right text-xs sm:block">
-                  <div className={overdue ? "text-destructive" : "text-muted-foreground"}>
+                  <div
+                    className={overdue ? "font-medium text-destructive" : "text-muted-foreground"}
+                  >
                     {t.deadline
                       ? overdue
                         ? `Overdue · ${t.deadline}`
                         : t.deadline
                       : "No deadline"}
                   </div>
-                  <div className="text-muted-foreground">
-                    {"●".repeat(t.importance)}
-                    <span className="opacity-30">{"●".repeat(5 - t.importance)}</span>
+                  <div className="mt-0.5 text-muted-foreground">
+                    <Importance value={t.importance} />
                   </div>
                 </div>
-                <span className="rounded-full border px-2 py-0.5 text-[11px] text-muted-foreground">
+                <span
+                  className={`min-w-[5.5rem] rounded-md px-2 py-0.5 text-center text-[11px] ${STATUS_STYLE[t.status]}`}
+                >
                   {STATUS_LABEL[t.status]}
                 </span>
               </li>

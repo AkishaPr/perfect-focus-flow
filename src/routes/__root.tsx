@@ -14,6 +14,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AppShell } from "@/components/AppShell";
 import { Toaster } from "@/components/ui/sonner";
+import { THEME_INIT_SCRIPT, useTheme } from "@/lib/theme";
 
 function NotFoundComponent() {
   return (
@@ -104,8 +105,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <HeadContent />
       </head>
       <body>
@@ -118,13 +120,14 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const [theme] = useTheme();
 
   return (
     <QueryClientProvider client={queryClient}>
       <AppShell>
         <Outlet />
       </AppShell>
-      <Toaster theme="dark" />
+      <Toaster theme={theme} />
     </QueryClientProvider>
   );
 }
