@@ -1,10 +1,11 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
-import { CalendarDays, CheckSquare, Gauge, LayoutDashboard, Settings, Target, Timer } from "lucide-react";
+import { CalendarDays, CheckSquare, Gauge, LayoutDashboard, Settings, Sparkles, Target, Timer } from "lucide-react";
 import { useStore } from "@/lib/store";
 
 const NAV = [
   { to: "/", label: "Today", icon: LayoutDashboard },
+  { to: "/planner", label: "Planner", icon: Sparkles },
   { to: "/week", label: "Week", icon: CalendarDays },
   { to: "/tasks", label: "Tasks", icon: CheckSquare },
   { to: "/goals", label: "Goals", icon: Target },
@@ -52,7 +53,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </main>
 
-      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-7 border-t bg-sidebar md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-8 border-t bg-sidebar md:hidden">
         {NAV.map(({ to, label, icon: Icon }) => (
           <Link
             key={to}

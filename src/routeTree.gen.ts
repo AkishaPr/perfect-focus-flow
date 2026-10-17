@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as FocusRouteImport } from './routes/focus'
 import { Route as GoalsRouteImport } from './routes/goals'
+import { Route as PlannerRouteImport } from './routes/planner'
 import { Route as ProgressRouteImport } from './routes/progress'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as TasksRouteImport } from './routes/tasks'
@@ -30,6 +31,11 @@ const FocusRoute = FocusRouteImport.update({
 const GoalsRoute = GoalsRouteImport.update({
   id: '/goals',
   path: '/goals',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlannerRoute = PlannerRouteImport.update({
+  id: '/planner',
+  path: '/planner',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProgressRoute = ProgressRouteImport.update({
@@ -57,6 +63,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/focus': typeof FocusRoute
   '/goals': typeof GoalsRoute
+  '/planner': typeof PlannerRoute
   '/progress': typeof ProgressRoute
   '/settings': typeof SettingsRoute
   '/tasks': typeof TasksRoute
@@ -66,6 +73,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/focus': typeof FocusRoute
   '/goals': typeof GoalsRoute
+  '/planner': typeof PlannerRoute
   '/progress': typeof ProgressRoute
   '/settings': typeof SettingsRoute
   '/tasks': typeof TasksRoute
@@ -76,6 +84,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/focus': typeof FocusRoute
   '/goals': typeof GoalsRoute
+  '/planner': typeof PlannerRoute
   '/progress': typeof ProgressRoute
   '/settings': typeof SettingsRoute
   '/tasks': typeof TasksRoute
@@ -84,14 +93,30 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/focus' | '/goals' | '/progress' | '/settings' | '/tasks' | '/week'
+    | '/'
+    | '/focus'
+    | '/goals'
+    | '/planner'
+    | '/progress'
+    | '/settings'
+    | '/tasks'
+    | '/week'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/focus' | '/goals' | '/progress' | '/settings' | '/tasks' | '/week'
+  to:
+    | '/'
+    | '/focus'
+    | '/goals'
+    | '/planner'
+    | '/progress'
+    | '/settings'
+    | '/tasks'
+    | '/week'
   id:
     | '__root__'
     | '/'
     | '/focus'
     | '/goals'
+    | '/planner'
     | '/progress'
     | '/settings'
     | '/tasks'
@@ -102,6 +127,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   FocusRoute: typeof FocusRoute
   GoalsRoute: typeof GoalsRoute
+  PlannerRoute: typeof PlannerRoute
   ProgressRoute: typeof ProgressRoute
   SettingsRoute: typeof SettingsRoute
   TasksRoute: typeof TasksRoute
@@ -129,6 +155,13 @@ declare module '@tanstack/react-router' {
       path: '/goals'
       fullPath: '/goals'
       preLoaderRoute: typeof GoalsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/planner': {
+      id: '/planner'
+      path: '/planner'
+      fullPath: '/planner'
+      preLoaderRoute: typeof PlannerRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/progress': {
@@ -166,6 +199,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   FocusRoute: FocusRoute,
   GoalsRoute: GoalsRoute,
+  PlannerRoute: PlannerRoute,
   ProgressRoute: ProgressRoute,
   SettingsRoute: SettingsRoute,
   TasksRoute: TasksRoute,

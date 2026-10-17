@@ -1,7 +1,8 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { z } from "zod";
-import type { CalEvent, Settings, StoreData } from "./types";
+import type { CalEvent, Goal, PlanBlock, Settings, StoreData, Task } from "./types";
+import { mergePlan } from "./planner/fit";
 
 export const STORE_VERSION = 1;
 
@@ -93,6 +94,8 @@ interface Actions {
   deleteTask: (id: string) => void;
   upsertGoal: (g: Goal) => void;
   deleteGoal: (id: string) => void;
+  applyPlan: (proposed: PlanBlock[], dates: string[], now?: Date) => void;
+  clearPlanned: (dates: string[], now?: Date) => void;
 }
 
 const upsert = <T extends { id: string }>(list: T[], item: T) =>
@@ -120,6 +123,8 @@ export const useStore = create<StoreData & Actions>()(
           goals: s.goals.filter((x) => x.id !== id),
           tasks: s.tasks.map((t) => (t.goalId === id ? { ...t, goalId: undefined } : t)),
         })),
+      applyPlan: (proposed, dates, now) => set((s) => ({ blocks: mergePlan(s.blocks, proposed, dates, now) })),
+      clearPlanned: (dates, now) => set((s) => ({ blocks: mergePlan(s.blocks, [], dates, now) })),
     }),
     {
       name: "alcc:v1",
