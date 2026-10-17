@@ -10,6 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { goalsForTask } from "@/lib/goals";
 import { uid, useStore } from "@/lib/store";
 import { SUBJECTS, SUBJECT_LABEL, TASK_TYPES, type Task, type TaskStatus } from "@/lib/types";
 
@@ -159,7 +160,7 @@ export function TaskDialog({ initial, onClose }: { initial: Task | null; onClose
               onChange={(e) => set({ goalId: e.target.value || undefined })}
             >
               <option value="">None</option>
-              {goals.map((g) => (
+              {goalsForTask(goals, t).map((g) => (
                 <option key={g.id} value={g.id}>
                   {g.title} ({g.weekStart})
                 </option>
@@ -194,6 +195,7 @@ export function TaskDialog({ initial, onClose }: { initial: Task | null; onClose
               variant="ghost"
               className="mr-auto text-destructive"
               onClick={() => {
+                if (!window.confirm(`Delete "${t.title}"? Its planned study blocks are removed too.`)) return;
                 del(t.id);
                 onClose();
               }}

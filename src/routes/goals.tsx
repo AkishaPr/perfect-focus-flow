@@ -118,30 +118,89 @@ function GoalsPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
           {mine.map((g) => {
-            const linked = tasks.filter((t) => t.goalId === g.id);
-            const done = linked.filter((t) => t.status === "done").length;
+            const p = goalProgress(g, tasks);
+            if (editing?.id === g.id) {
+              const bad = !editing.title.trim() || editing.target < 1;
+              return (
+                <form
+                  key={g.id}
+                  className="space-y-3 rounded-lg border border-primary/50 bg-card p-5"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (bad) return;
+                    upsert({ ...editing, title: editing.title.trim() });
+                    setEditing(null);
+                  }}
+                >
+                  <Input
+                    autoFocus
+                    aria-label="Goal title"
+                    value={editing.title}
+                    onChange={(e) => setEditing({ ...editing, title: e.target.value })}
+                  />
+                  <div className="flex gap-2">
+                    <select
+                      aria-label="Goal type"
+                      className="h-9 flex-1 rounded-md border bg-input/30 px-2 text-sm capitalize"
+                      value={editing.type}
+                      onChange={(e) => setEditing({ ...editing, type: e.target.value as TaskType })}
+                    >
+                      {TASK_TYPES.map((t) => (
+                        <option key={t} value={t}>
+                          {t}
+                        </option>
+                      ))}
+                    </select>
+                    <Input
+                      type="number"
+                      min={1}
+                      className="w-24"
+                      aria-label="Goal target"
+                      value={editing.target}
+                      onChange={(e) => setEditing({ ...editing, target: Number(e.target.value) || 0 })}
+                    />
+                  </div>
+                  {bad && <p className="text-xs text-destructive">Add a title and a target of at least 1.</p>}
+                  <div className="flex justify-end gap-2">
+                    <Button type="button" variant="secondary" size="sm" onClick={() => setEditing(null)}>
+                      Cancel
+                    </Button>
+                    <Button type="submit" size="sm" disabled={bad}>
+                      Save
+                    </Button>
+                  </div>
+                </form>
+              );
+            }
             return (
               <div key={g.id} className="rounded-lg border bg-card p-5">
                 <div className="mb-1 flex items-start justify-between gap-2">
                   <div>
                     <div className="font-medium">{g.title}</div>
                     <div className="text-xs capitalize text-muted-foreground">
-                      {g.type} · {linked.length} linked task{linked.length === 1 ? "" : "s"}
+                      {g.type} · {p.linked} linked task{p.linked === 1 ? "" : "s"}
                     </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label="Delete goal"
-                    onClick={() => del(g.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div className="flex">
+                    <Button variant="ghost" size="icon" aria-label="Edit goal" onClick={() => setEditing(g)}>
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Delete goal"
+                      onClick={() => {
+                        if (window.confirm(`Delete goal "${g.title}"? Linked tasks are kept, just unlinked.`)) del(g.id);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
                 <div className="mt-3 flex items-center gap-3">
-                  <Progress value={Math.min(100, (done / g.target) * 100)} className="flex-1" />
+                  <Progress value={p.percent} className="flex-1" />
                   <span className="font-mono text-sm">
-                    {done}/{g.target}
+                    {p.done}/{p.target}
                   </span>
                 </div>
               </div>
