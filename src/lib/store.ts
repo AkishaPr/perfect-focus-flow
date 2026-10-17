@@ -138,6 +138,13 @@ const safeStorage = {
   },
 } as PersistStorage<StoreData & Actions>;
 
+/** Keeps `completedAt` in step with status: set when first marked done, cleared when reopened. */
+export function withCompletion(prev: Task | undefined, next: Task, now = new Date()): Task {
+  if (next.status !== "done") return { ...next, completedAt: undefined };
+  const kept = prev?.status === "done" ? (prev.completedAt ?? next.completedAt) : undefined;
+  return { ...next, completedAt: kept ?? now.toISOString() };
+}
+
 export const useStore = create<StoreData & Actions>()(
   persist(
     (set) => ({
@@ -147,7 +154,10 @@ export const useStore = create<StoreData & Actions>()(
       reset: () => set(() => emptyData()),
       upsertEvent: (e) => set((s) => ({ events: upsert(s.events, e) })),
       deleteEvent: (id) => set((s) => ({ events: s.events.filter((x) => x.id !== id) })),
-      upsertTask: (t) => set((s) => ({ tasks: upsert(s.tasks, t) })),
+      upsertTask: (t) =>
+        set((s) => ({
+          tasks: upsert(s.tasks, withCompletion(s.tasks.find((x) => x.id === t.id), t)),
+        })),
       // Removing a task also removes its planned (not completed) blocks.
       deleteTask: (id) =>
         set((s) => ({
