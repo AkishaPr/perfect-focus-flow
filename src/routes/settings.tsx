@@ -3,6 +3,7 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { Download, Plus, Trash2, Upload } from "lucide-react";
 import { PageHeader } from "@/components/AppShell";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -47,7 +48,7 @@ const WEIGHT_LABELS: Record<keyof Weights, string> = {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-lg border bg-card p-5">
+    <section className="rounded-xl border bg-card p-5">
       <h2 className="mb-4 text-lg font-semibold">{title}</h2>
       {children}
     </section>
@@ -112,6 +113,15 @@ function SettingsPage() {
     <>
       <PageHeader title="Settings" subtitle="Personal routine, planner tuning and backups." />
       <div className="grid gap-5 lg:grid-cols-2">
+        <Section title="Appearance">
+          <p className="mb-4 text-sm text-muted-foreground">
+            Light is the default. Your choice is remembered in this browser only.
+          </p>
+          <div className="max-w-xs">
+            <ThemeToggle />
+          </div>
+        </Section>
+
         <Section title="Routine">
           <div className="grid grid-cols-2 gap-4">
             <Field label="Wake time">
