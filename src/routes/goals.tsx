@@ -1,13 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Pencil, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { uid, useStore } from "@/lib/store";
 import { addDays, weekStart, ymd } from "@/lib/calendar";
-import { TASK_TYPES, type TaskType } from "@/lib/types";
+import { goalProgress } from "@/lib/goals";
+import { TASK_TYPES, type Goal, type TaskType } from "@/lib/types";
 
 export const Route = createFileRoute("/goals")({
   head: () => ({
@@ -29,6 +30,7 @@ function GoalsPage() {
   const tasks = useStore((s) => s.tasks);
   const upsert = useStore((s) => s.upsertGoal);
   const del = useStore((s) => s.deleteGoal);
+  const [editing, setEditing] = useState<Goal | null>(null);
   const [anchor, setAnchor] = useState(() => weekStart(new Date()));
   const [form, setForm] = useState<{ title: string; type: TaskType; target: number }>({
     title: "",
