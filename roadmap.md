@@ -4,7 +4,7 @@
 - [x] 2. Events + Week calendar
 - [x] 3A. Data validation, safe loading, import errors (merged PR #1)
 - [x] 3B. Tasks + Goals: completion time, goal progress, goal editing, delete confirmations
-- [ ] 4. Planner engine + unit tests
+- [x] 4. Planner engine + unit tests
 - [ ] 5. Today dashboard + Start Next Task
 - [ ] 6. Focus timer + sessions
 - [ ] 7. Missed-task recovery flow
