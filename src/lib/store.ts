@@ -7,6 +7,7 @@ import {
   recordFocusSegment,
   type SegmentInput,
 } from "./focus/segments";
+import { resolveMissedState, type Decision } from "./planner/recovery";
 import { describeReport, isCleanReport, sanitizeStoreData, type MigrationReport } from "./schema";
 import type { CalEvent, Goal, PlanBlock, Settings, StoreData, Task } from "./types";
 
@@ -81,6 +82,8 @@ interface Actions {
   deleteSession: (id: string) => void;
   /** Stage 6: a timer started on this task, so it is no longer just "to do". */
   markTaskInProgress: (taskId: string) => void;
+  /** Stage 7: apply the user's choices for missed work (carry over, skip, defer, done). */
+  resolveMissed: (decisions: Decision[], now?: Date) => void;
 }
 
 const upsert = <T extends { id: string }>(list: T[], item: T) =>
@@ -265,6 +268,8 @@ export const useStore = create<StoreData & Actions>()(
       logFocusSegment: (seg) => set((s) => recordFocusSegment(s, seg)),
       deleteSession: (id) => set((s) => deleteSessionState(s, id)),
       markTaskInProgress: (taskId) => set((s) => ({ tasks: markInProgress(s.tasks, taskId) })),
+      resolveMissed: (decisions, now) =>
+        set((s) => resolveMissedState(s, decisions, now ?? new Date())),
     }),
     {
       name: STORAGE_KEY,

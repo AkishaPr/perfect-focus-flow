@@ -1,4 +1,6 @@
 ﻿import "@testing-library/jest-dom/vitest";
+import { afterEach } from "vitest";
+import { usePlanLog } from "@/lib/recovery/log";
 
 const storageData = new Map<string, string>();
 
@@ -50,4 +52,9 @@ Object.defineProperty(window, "matchMedia", {
     removeEventListener: () => {},
     dispatchEvent: () => {},
   }),
+});
+
+// The plan log is module state: clear it so one test's snapshot is never another test's "yesterday".
+afterEach(() => {
+  usePlanLog.setState({ logs: [] });
 });

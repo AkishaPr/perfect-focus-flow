@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { TimerDock } from "@/components/TimerDock";
 import { hydrateTimer } from "@/lib/focus/store";
+import { hydratePlanLog } from "@/lib/recovery/log";
 import { getBackupRaw, hydrateStore, type RecoveryNotice } from "@/lib/store";
 
 const NAV = [
@@ -35,7 +36,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [notice, setNotice] = useState<RecoveryNotice | null>(null);
   useEffect(() => {
-    Promise.all([hydrateStore(), hydrateTimer()])
+    Promise.all([hydrateStore(), hydrateTimer(), hydratePlanLog()])
       // Only set when present: a second (dev StrictMode) run finds nothing left to report.
       .then(([n]) => n && setNotice(n))
       .catch((e) => console.error("Failed to load saved data", e))

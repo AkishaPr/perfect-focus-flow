@@ -28,3 +28,20 @@ export function studiedMinOn(date: string, blocks: PlanBlock[], sessions: Sessio
     .reduce((sum, b) => sum + Math.max(0, toMin(b.end) - toMin(b.start)), 0);
   return fromSessions + fromBlocks;
 }
+
+/**
+ * Minutes studied on one task on a day. Same definition as `studiedMinOn`, restricted to that
+ * task's sessions and blocks, so the two can never disagree.
+ */
+export function studiedMinForTaskOn(
+  date: string,
+  taskId: string,
+  blocks: PlanBlock[],
+  sessions: Session[],
+): number {
+  return studiedMinOn(
+    date,
+    blocks.filter((b) => b.taskId === taskId),
+    sessions.filter((s) => s.taskId === taskId),
+  );
+}
