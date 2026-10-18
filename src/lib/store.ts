@@ -1,7 +1,8 @@
 import { create } from "zustand";
 import { persist, type PersistStorage } from "zustand/middleware";
+import { fromMin, toMin, ymd } from "./calendar";
 import { describeReport, isCleanReport, sanitizeStoreData, type MigrationReport } from "./schema";
-import type { CalEvent, Goal, Settings, StoreData, Task } from "./types";
+import type { CalEvent, Goal, PlanBlock, Settings, StoreData, Task } from "./types";
 
 export const STORE_VERSION = 1;
 
@@ -62,6 +63,12 @@ interface Actions {
   deleteTask: (id: string) => void;
   upsertGoal: (g: Goal) => void;
   deleteGoal: (id: string) => void;
+  /** Commit a planned block as "doing this now": keeps it in place and marks its task in progress. */
+  startBlock: (block: PlanBlock) => void;
+  /** Undo `startBlock`: drop the committed block; the task goes back to "to do" if nothing else holds it. */
+  releaseBlock: (blockId: string) => void;
+  /** Finish a committed block and its task. */
+  completeBlock: (blockId: string, now?: Date) => void;
 }
 
 const upsert = <T extends { id: string }>(list: T[], item: T) =>
@@ -145,6 +152,70 @@ export function withCompletion(prev: Task | undefined, next: Task, now = new Dat
   return { ...next, completedAt: kept ?? now.toISOString() };
 }
 
+type BlockState = Pick<StoreData, "tasks" | "blocks">;
+
+/**
+ * Pure state transitions for committed blocks (the user's own "I'm doing this" decisions, which
+ * the planner treats as locked). Exported so they can be tested without the store.
+ */
+export function startBlockState(s: BlockState, b: PlanBlock): BlockState {
+  const task = s.tasks.find((t) => t.id === b.taskId);
+  if (!task || task.status === "done") return s;
+  // Persist only what a PlanBlock is: the planner's extra fields (score, reasons…) stay out of storage.
+  const committed: PlanBlock = {
+    id: b.id,
+    taskId: b.taskId,
+    date: b.date,
+    start: b.start,
+    end: b.end,
+    status: "planned",
+  };
+  return {
+    blocks: upsert(s.blocks, committed),
+    tasks: s.tasks.map((t) => (t.id === task.id ? { ...t, status: "in_progress" } : t)),
+  };
+}
+
+export function releaseBlockState(s: BlockState, blockId: string): BlockState {
+  const b = s.blocks.find((x) => x.id === blockId);
+  if (!b || b.status !== "planned") return s;
+  const blocks = s.blocks.filter((x) => x.id !== blockId);
+  const stillCommitted = blocks.some((x) => x.taskId === b.taskId && x.status === "planned");
+  return {
+    blocks,
+    tasks: s.tasks.map((t) =>
+      t.id === b.taskId && t.status === "in_progress" && !stillCommitted
+        ? { ...t, status: "todo" }
+        : t,
+    ),
+  };
+}
+
+/**
+ * Mark the block and its task done. Finishing early shortens the block to now (so study time isn't
+ * overstated); finishing late keeps the planned end, because the real end isn't known without a
+ * timer. Other still-pending commitments for the same task are dropped, since the task is done.
+ */
+export function completeBlockState(s: BlockState, blockId: string, now = new Date()): BlockState {
+  const b = s.blocks.find((x) => x.id === blockId);
+  if (!b || b.status !== "planned") return s;
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const finishedEarly = nowMin >= toMin(b.start) + 5 && nowMin < toMin(b.end);
+  const done: PlanBlock = {
+    ...b,
+    status: "done",
+    end: finishedEarly && b.date === ymd(now) ? fromMin(nowMin) : b.end,
+  };
+  return {
+    blocks: s.blocks
+      .filter((x) => x.id === blockId || x.taskId !== b.taskId || x.status !== "planned")
+      .map((x) => (x.id === blockId ? done : x)),
+    tasks: s.tasks.map((t) =>
+      t.id === b.taskId ? withCompletion(t, { ...t, status: "done" }, now) : t,
+    ),
+  };
+}
+
 export const useStore = create<StoreData & Actions>()(
   persist(
     (set) => ({
@@ -156,7 +227,13 @@ export const useStore = create<StoreData & Actions>()(
       deleteEvent: (id) => set((s) => ({ events: s.events.filter((x) => x.id !== id) })),
       upsertTask: (t) =>
         set((s) => ({
-          tasks: upsert(s.tasks, withCompletion(s.tasks.find((x) => x.id === t.id), t)),
+          tasks: upsert(
+            s.tasks,
+            withCompletion(
+              s.tasks.find((x) => x.id === t.id),
+              t,
+            ),
+          ),
         })),
       // Removing a task also removes its planned (not completed) blocks.
       deleteTask: (id) =>
@@ -170,6 +247,9 @@ export const useStore = create<StoreData & Actions>()(
           goals: s.goals.filter((x) => x.id !== id),
           tasks: s.tasks.map((t) => (t.goalId === id ? { ...t, goalId: undefined } : t)),
         })),
+      startBlock: (block) => set((s) => startBlockState(s, block)),
+      releaseBlock: (blockId) => set((s) => releaseBlockState(s, blockId)),
+      completeBlock: (blockId, now) => set((s) => completeBlockState(s, blockId, now)),
     }),
     {
       name: STORAGE_KEY,
