@@ -19,6 +19,13 @@ const plan = generatePlan({ ...useStore.getState(), now: new Date() });
    sliver smaller than `minChunkMin`. **Unsplittable** tasks (e.g. past papers) need one gap.
 4. **Whatever doesn't fit is reported**, never overbooked: `unscheduled` (with a reason) and `warnings`.
 
+## Logged study time (Stage 6)
+
+Sessions from the focus timer feed the planner two ways: `remainingMin` subtracts a task's logged
+minutes from its estimate (a task with its whole estimate logged is reported as `estimate-used-up`),
+and today's daily cap is reduced by `studiedMinOn`, the single definition of minutes studied on a
+day (sessions by `actualMin`, plus done/partial blocks no session points at).
+
 ## Score (0–100)
 
 Weighted mean of six 0–1 factors using `settings.weights`: `deadline` (slack-based: free time before

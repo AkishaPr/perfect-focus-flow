@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { TimerDock } from "@/components/TimerDock";
+import { hydrateTimer } from "@/lib/focus/store";
 import { getBackupRaw, hydrateStore, type RecoveryNotice } from "@/lib/store";
 
 const NAV = [
@@ -33,9 +35,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [notice, setNotice] = useState<RecoveryNotice | null>(null);
   useEffect(() => {
-    hydrateStore()
+    Promise.all([hydrateStore(), hydrateTimer()])
       // Only set when present: a second (dev StrictMode) run finds nothing left to report.
-      .then((n) => n && setNotice(n))
+      .then(([n]) => n && setNotice(n))
       .catch((e) => console.error("Failed to load saved data", e))
       .finally(() => setReady(true));
   }, []);
@@ -90,6 +92,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <>
               {notice && <RecoveryBanner notice={notice} onDismiss={() => setNotice(null)} />}
               {children}
+              <TimerDock />
             </>
           ) : (
             <div className="text-sm text-muted-foreground">Loading…</div>

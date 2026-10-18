@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ComingSoon, PageHeader } from "@/components/AppShell";
+import { Focus } from "@/components/Focus";
 
 export const Route = createFileRoute("/focus")({
   head: () => ({
@@ -10,14 +10,5 @@ export const Route = createFileRoute("/focus")({
       { property: "og:description", content: "Study timer with actual-duration tracking." },
     ],
   }),
-  component: FocusPage,
+  component: Focus,
 });
-
-function FocusPage() {
-  return (
-    <>
-      <PageHeader title="Focus" subtitle="Study timer with actual-duration tracking." />
-      <ComingSoon stage="stage 6" />
-    </>
-  );
-}

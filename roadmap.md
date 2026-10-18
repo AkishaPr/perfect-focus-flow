@@ -6,7 +6,7 @@
 - [x] 3B. Tasks + Goals: completion time, goal progress, goal editing, delete confirmations
 - [x] 4. Planner engine + unit tests
 - [x] 5. Today dashboard + Start Next Task
-- [ ] 6. Focus timer + sessions
+- [x] 6. Focus timer + sessions
 - [ ] 7. Missed-task recovery flow
 - [ ] 8. Progress dashboard + paper marks
 - [ ] 9. Polish
