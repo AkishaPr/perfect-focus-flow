@@ -2,6 +2,7 @@ import { eventsOn, toMin, ymd } from "../calendar";
 import type { CalEvent, PlanBlock, StoreData, Task } from "../types";
 import { startOfDay } from "./dates";
 import { generatePlan } from "./index";
+import { studiedMinOn } from "./studied";
 import type {
   PlanResult,
   PlannerOptions,
@@ -77,7 +78,6 @@ export interface TodayView {
   didNotFit: UnscheduledTask[];
 }
 
-const length = (b: { start: string; end: string }) => toMin(b.end) - toMin(b.start);
 const KIND_ORDER = { event: 0, block: 1, done: 2 } as const;
 
 /**
@@ -184,7 +184,7 @@ export function buildToday(data: TodayData, now: Date, options: PlannerOptions =
   const open = data.tasks.filter((t) => t.status !== "done" && t.status !== "deferred");
   const stats: TodayStats = {
     plannedMin: plan.capacity[0]?.plannedMin ?? 0,
-    doneMin: doneToday.reduce((s, b) => s + length(b), 0),
+    doneMin: studiedMinOn(todayStr, data.blocks, data.sessions),
     dailyGoalMin: data.settings.dailyGoalMin,
     dueToday: open.filter((t) => t.deadline === todayStr).length,
     overdue: open.filter((t) => t.deadline !== undefined && t.deadline < todayStr).length,

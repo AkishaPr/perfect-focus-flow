@@ -103,6 +103,7 @@ export const sessionSchema = z.object({
   start: z.string().min(1),
   end: z.string().min(1),
   actualMin: nonNeg,
+  blockId: id.optional(),
 });
 
 export const markSchema = z

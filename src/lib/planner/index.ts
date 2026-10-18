@@ -17,6 +17,7 @@ import type { PlanBlock, Subject, Task } from "../types";
 import { buildDaySlots, windowMinutes, type Slot } from "./availability";
 import { daysBetween, parseYmd, startOfDay, ymd } from "./dates";
 import { explain } from "./explain";
+import { studiedMinOn } from "./studied";
 import { buildScoringContext, remainingMin, scoreTask, STUCK_CARRY_OVER } from "./scoring";
 import {
   resolveOptions,
@@ -33,6 +34,7 @@ import {
 export * from "./types";
 export { buildDaySlots, mergeIntervals, subtractIntervals, windowMinutes } from "./availability";
 export { buildScoringContext, remainingMin, scoreTask, spentMin, subjectWeakness } from "./scoring";
+export { sessionDate, studiedMinOn } from "./studied";
 
 interface Candidate {
   task: Task;
@@ -111,9 +113,7 @@ export function generatePlan(input: PlannerInput): PlanResult {
     lockedMinFor.set(b.taskId, (lockedMinFor.get(b.taskId) ?? 0) + len);
     lockedMinOn.set(b.date, (lockedMinOn.get(b.date) ?? 0) + len);
   }
-  const doneTodayMin = input.blocks
-    .filter((b) => b.date === todayStr && (b.status === "done" || b.status === "partial"))
-    .reduce((s, b) => s + (toMin(b.end) - toMin(b.start)), 0);
+  const doneTodayMin = studiedMinOn(todayStr, input.blocks, input.sessions);
 
   // ---- 2. Free slots and per-day caps ----
   const slots: Slot[] = [];

@@ -98,9 +98,14 @@ export interface PlanBlock {
 export interface Session {
   id: string;
   taskId: string;
+  /** ISO timestamp the focus segment began. */
   start: string;
+  /** ISO timestamp it was logged. */
   end: string;
+  /** Minutes actually studied: excludes pauses and breaks. */
   actualMin: number;
+  /** The done/partial block this session produced. Lets study time be counted once, not twice. */
+  blockId?: string | undefined;
 }
 
 export interface PaperMark {

@@ -1,6 +1,12 @@
 import { create } from "zustand";
 import { persist, type PersistStorage } from "zustand/middleware";
 import { fromMin, toMin, ymd } from "./calendar";
+import {
+  deleteSessionState,
+  markInProgress,
+  recordFocusSegment,
+  type SegmentInput,
+} from "./focus/segments";
 import { describeReport, isCleanReport, sanitizeStoreData, type MigrationReport } from "./schema";
 import type { CalEvent, Goal, PlanBlock, Settings, StoreData, Task } from "./types";
 
@@ -69,6 +75,12 @@ interface Actions {
   releaseBlock: (blockId: string) => void;
   /** Finish a committed block and its task. */
   completeBlock: (blockId: string, now?: Date) => void;
+  /** Stage 6: log a finished focus segment as a session plus a done/partial block. */
+  logFocusSegment: (seg: SegmentInput) => void;
+  /** Stage 6: delete a session and the block it produced. */
+  deleteSession: (id: string) => void;
+  /** Stage 6: a timer started on this task, so it is no longer just "to do". */
+  markTaskInProgress: (taskId: string) => void;
 }
 
 const upsert = <T extends { id: string }>(list: T[], item: T) =>
@@ -250,6 +262,9 @@ export const useStore = create<StoreData & Actions>()(
       startBlock: (block) => set((s) => startBlockState(s, block)),
       releaseBlock: (blockId) => set((s) => releaseBlockState(s, blockId)),
       completeBlock: (blockId, now) => set((s) => completeBlockState(s, blockId, now)),
+      logFocusSegment: (seg) => set((s) => recordFocusSegment(s, seg)),
+      deleteSession: (id) => set((s) => deleteSessionState(s, id)),
+      markTaskInProgress: (taskId) => set((s) => ({ tasks: markInProgress(s.tasks, taskId) })),
     }),
     {
       name: STORAGE_KEY,

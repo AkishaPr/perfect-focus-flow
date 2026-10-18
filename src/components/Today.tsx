@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useMemo } from "react";
-import { AlertTriangle, Check, Clock, Play, Undo2 } from "lucide-react";
+import { AlertTriangle, Check, Clock, Play, Timer, Undo2 } from "lucide-react";
 import { PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -172,6 +172,11 @@ export function Today({ now: nowOverride }: { now?: Date }) {
                 </Button>
                 <Button variant="secondary" onClick={() => releaseBlock(active.block.id)}>
                   <Undo2 className="h-4 w-4" /> Put back
+                </Button>
+                <Button asChild variant="ghost">
+                  <Link to="/focus">
+                    <Timer className="h-4 w-4" /> Open timer
+                  </Link>
                 </Button>
               </div>
             </section>
