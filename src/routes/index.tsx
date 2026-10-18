@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ComingSoon, PageHeader } from "@/components/AppShell";
+import { Today } from "@/components/Today";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -10,14 +10,5 @@ export const Route = createFileRoute("/")({
       { property: "og:description", content: "Fixed events, today's plan and your next task." },
     ],
   }),
-  component: TodayPage,
+  component: Today,
 });
-
-function TodayPage() {
-  return (
-    <>
-      <PageHeader title="Today" subtitle="Fixed events, today's plan and your next task." />
-      <ComingSoon stage="stage 5" />
-    </>
-  );
-}

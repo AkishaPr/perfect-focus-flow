@@ -38,6 +38,14 @@ tasks compete for the same free time.
 | `varietyPenalty`                        | 6       | Score points off per consecutive same-subject block |
 | `lockedBlockIds`                        | none    | Planned blocks to keep exactly as they are          |
 
+## Today view (`today.ts`)
+
+`buildToday(data, now)` derives everything the Today page shows: the active block, next up,
+today's timeline, stats and warnings. Blocks saved in the store as `"planned"` are the user's own
+"I'm doing this" commitments (`startBlock`), so they're passed to the planner as locked. A
+committed block outlives its planned time, because the planner drops past blocks, so "in progress"
+is read from the store, not the plan.
+
 ## Not here yet
 
 Spaced-revision task generation, estimate calibration from real session times, exam-phase mix and
