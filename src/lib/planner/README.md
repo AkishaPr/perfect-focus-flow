@@ -53,8 +53,17 @@ today's timeline, stats and warnings. Blocks saved in the store as `"planned"` a
 committed block outlives its planned time, because the planner drops past blocks, so "in progress"
 is read from the store, not the plan.
 
+## Missed-work recovery (`recovery.ts`)
+
+The plan is derived, so tomorrow nothing remembers what today's plan promised. `snapshotDay`
+records the minutes each task was given; the next day `buildReview` compares that with what was
+actually studied (`studiedMinForTaskOn`) and lists tasks that got under half their time. The user
+chooses per task: **carry over** (+1 `carryOverCount`, which raises priority and, at 3, triggers
+the "stuck" warning), **keep as is** (no penalty), **defer** (out of planning) or **done** (did it
+off the app). A one-click "carry over" skips tasks one carry-over away from stuck, so avoidance
+can't continue silently. Snapshots live in their own slice (`src/lib/recovery/log.ts`).
+
 ## Not here yet
 
-Spaced-revision task generation, estimate calibration from real session times, exam-phase mix and
-the missed-task _flow_ (rollover decisions) belong to later stages. `findMissedBlocks` is the pure
-helper that flow will start from.
+Spaced-revision task generation, estimate calibration from real session times and the exam-phase
+mix belong to later stages.

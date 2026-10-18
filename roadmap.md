@@ -7,6 +7,6 @@
 - [x] 4. Planner engine + unit tests
 - [x] 5. Today dashboard + Start Next Task
 - [x] 6. Focus timer + sessions
-- [ ] 7. Missed-task recovery flow
+- [x] 7. Missed-task recovery flow
 - [ ] 8. Progress dashboard + paper marks
 - [ ] 9. Polish

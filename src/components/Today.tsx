@@ -1,11 +1,15 @@
 import { Link } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, Check, Clock, Play, Timer, Undo2 } from "lucide-react";
 import { PageHeader } from "@/components/AppShell";
+import { Recovery } from "@/components/Recovery";
+import { TaskDialog } from "@/components/TaskDialog";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useNow } from "@/hooks/use-now";
+import { buildReview, snapshotDay } from "@/lib/planner/recovery";
 import { buildToday, type TimelineEntry } from "@/lib/planner/today";
+import { resolveReview, usePlanLog } from "@/lib/recovery/log";
 import type { PlannerWarning } from "@/lib/planner";
 import { toMin } from "@/lib/calendar";
 import { useStore } from "@/lib/store";
@@ -134,6 +138,24 @@ export function Today({ now: nowOverride }: { now?: Date }) {
     [settings, events, tasks, goals, blocks, sessions, marks, planNow],
   );
   const { active, next, stats, timeline } = view;
+
+  // Remember what today's plan promised, so tomorrow can ask about what didn't happen.
+  const logs = usePlanLog((s) => s.logs);
+  const recordPlan = usePlanLog((s) => s.record);
+  const clearBefore = usePlanLog((s) => s.clearBefore);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const snapshot = useMemo(() => snapshotDay(view.plan, view.date), [view.plan, view.date]);
+  useEffect(() => {
+    if (snapshot) recordPlan(snapshot);
+  }, [snapshot, recordPlan]);
+  const review = useMemo(
+    () => buildReview(logs, { tasks, blocks, sessions }, view.date),
+    [logs, tasks, blocks, sessions, view.date],
+  );
+  // Earlier days with nothing left to ask about are finished: forget them.
+  useEffect(() => {
+    if (review.pastDates.length > 0 && review.items.length === 0) clearBefore(view.date);
+  }, [review, clearBefore, view.date]);
   const goalPct =
     stats.dailyGoalMin > 0
       ? Math.min(100, Math.round((stats.doneMin / stats.dailyGoalMin) * 100))
@@ -149,6 +171,11 @@ export function Today({ now: nowOverride }: { now?: Date }) {
           day: "numeric",
           month: "long",
         })}
+      />
+      <Recovery
+        items={review.items}
+        onResolve={(d) => resolveReview(d, view.date, now)}
+        onEdit={setEditingId}
       />
       <Warnings items={view.warnings} />
 
@@ -301,6 +328,10 @@ export function Today({ now: nowOverride }: { now?: Date }) {
           )}
         </aside>
       </div>
+      <TaskDialog
+        initial={tasks.find((t) => t.id === editingId) ?? null}
+        onClose={() => setEditingId(null)}
+      />
     </>
   );
 }
