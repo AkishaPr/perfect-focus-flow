@@ -38,6 +38,22 @@ export const spentMin = (task: Pick<Task, "id">, sessions: Session[]) =>
 export const remainingMin = (task: Pick<Task, "id" | "estimateMin">, sessions: Session[]) =>
   Math.max(0, Math.ceil(task.estimateMin - spentMin(task, sessions)));
 
+/** How many of a subject's latest papers count towards its recent average. */
+export const RECENT_PAPERS = 3;
+
+/**
+ * Average % of a subject's latest papers (newest first by date, then id), or 0 with none. The one
+ * definition behind both the planner's weak-subject boost and the Progress page, so the number a
+ * user sees there is the number the planner acts on.
+ */
+export function recentAverage(list: PaperMark[]): number {
+  const recent = [...list]
+    .sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id))
+    .slice(0, RECENT_PAPERS);
+  if (recent.length === 0) return 0;
+  return recent.reduce((s, m) => s + (m.score / m.max) * 100, 0) / recent.length;
+}
+
 /**
  * Per-subject weakness from marks: average % of the last three papers, compared with the
  * strongest subject. A gap of 30+ points is 1. Needs marks in at least two subjects, otherwise
@@ -48,12 +64,7 @@ export function subjectWeakness(marks: PaperMark[]): Map<Subject, number> {
   for (const m of marks) bySubject.set(m.subject, [...(bySubject.get(m.subject) ?? []), m]);
   if (bySubject.size < 2) return new Map();
   const avg = new Map<Subject, number>();
-  for (const [subject, list] of bySubject) {
-    const recent = [...list]
-      .sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id))
-      .slice(0, 3);
-    avg.set(subject, recent.reduce((s, m) => s + (m.score / m.max) * 100, 0) / recent.length);
-  }
+  for (const [subject, list] of bySubject) avg.set(subject, recentAverage(list));
   const best = Math.max(...avg.values());
   const out = new Map<Subject, number>();
   for (const [subject, a] of avg) out.set(subject, clamp01((best - a) / WEAK_SUBJECT_GAP));
