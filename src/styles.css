@@ -32,6 +32,10 @@
   --color-success: var(--success);
   --color-signal: var(--signal);
   --color-signal-foreground: var(--signal-foreground);
+  --color-violet: var(--violet);
+  --color-sky: var(--sky);
+  --color-amber: var(--amber);
+  --color-coral: var(--coral);
   --color-maths: var(--maths);
   --color-physics: var(--physics);
   --color-ict: var(--ict);
@@ -122,6 +126,10 @@
   --success: oklch(0.800 0.182 152);
   --signal: oklch(0.855 0.125 181);
   --signal-foreground: oklch(0.000 0 0);
+  --violet: oklch(0.709 0.159 294);
+  --sky: oklch(0.754 0.139 233);
+  --amber: oklch(0.837 0.164 84);
+  --coral: oklch(0.719 0.169 13);
   --maths: oklch(0.754 0.139 233);
   --physics: oklch(0.800 0.182 152);
   --ict: oklch(0.709 0.159 294);
@@ -129,10 +137,10 @@
   --input: oklch(0.287 0.007 286);
   --ring: oklch(0.855 0.125 181);
   --chart-1: oklch(0.855 0.125 181);
-  --chart-2: oklch(0.754 0.139 233);
-  --chart-3: oklch(0.800 0.182 152);
-  --chart-4: oklch(0.709 0.159 294);
-  --chart-5: oklch(0.711 0.166 22);
+  --chart-2: oklch(0.709 0.159 294);
+  --chart-3: oklch(0.754 0.139 233);
+  --chart-4: oklch(0.837 0.164 84);
+  --chart-5: oklch(0.719 0.169 13);
   --sidebar: oklch(0.000 0 0);
   --sidebar-foreground: oklch(0.946 0 0);
   --sidebar-primary: oklch(0.855 0.125 181);
