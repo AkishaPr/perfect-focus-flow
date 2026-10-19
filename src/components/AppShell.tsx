@@ -17,56 +17,14 @@ import { hydratePlanLog } from "@/lib/recovery/log";
 import { getBackupRaw, hydrateStore, type RecoveryNotice } from "@/lib/store";
 
 const NAV = [
-  {
-    to: "/",
-    label: "Today",
-    icon: LayoutDashboard,
-    tone: "dark:[&_svg]:text-primary",
-    mobileTone: "dark:not-data-[status=active]:[&_svg]:text-primary",
-  },
-  {
-    to: "/week",
-    label: "Week",
-    icon: CalendarDays,
-    tone: "dark:[&_svg]:text-sky",
-    mobileTone: "dark:not-data-[status=active]:[&_svg]:text-sky",
-  },
-  {
-    to: "/tasks",
-    label: "Tasks",
-    icon: CheckSquare,
-    tone: "dark:[&_svg]:text-violet",
-    mobileTone: "dark:not-data-[status=active]:[&_svg]:text-violet",
-  },
-  {
-    to: "/goals",
-    label: "Goals",
-    icon: Target,
-    tone: "dark:[&_svg]:text-amber",
-    mobileTone: "dark:not-data-[status=active]:[&_svg]:text-amber",
-  },
-  {
-    to: "/focus",
-    label: "Focus",
-    icon: Timer,
-    tone: "dark:[&_svg]:text-coral",
-    mobileTone: "dark:not-data-[status=active]:[&_svg]:text-coral",
-  },
-  {
-    to: "/progress",
-    label: "Progress",
-    icon: Gauge,
-    tone: "dark:[&_svg]:text-success",
-    mobileTone: "dark:not-data-[status=active]:[&_svg]:text-success",
-  },
+  { to: "/", label: "Today", icon: LayoutDashboard },
+  { to: "/week", label: "Week", icon: CalendarDays },
+  { to: "/tasks", label: "Tasks", icon: CheckSquare },
+  { to: "/goals", label: "Goals", icon: Target },
+  { to: "/focus", label: "Focus", icon: Timer },
+  { to: "/progress", label: "Progress", icon: Gauge },
 ] as const;
-const SETTINGS_ITEM = {
-  to: "/settings",
-  label: "Settings",
-  icon: Settings,
-  tone: "",
-  mobileTone: "",
-} as const;
+const SETTINGS_ITEM = { to: "/settings", label: "Settings", icon: Settings } as const;
 const MOBILE_NAV = [...NAV, SETTINGS_ITEM] as const;
 
 const NAV_LINK = "flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm transition-colors";
@@ -98,14 +56,14 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </div>
         <nav aria-label="Main" className="flex flex-col gap-1">
-          {NAV.map(({ to, label, icon: Icon, tone }) => (
+          {NAV.map(({ to, label, icon: Icon }) => (
             <Link
               key={to}
               to={to}
               activeOptions={{ exact: to === "/" }}
               className={NAV_LINK}
               activeProps={{ className: NAV_ACTIVE }}
-              inactiveProps={{ className: `${NAV_IDLE} ${tone}` }}
+              inactiveProps={{ className: NAV_IDLE }}
             >
               <Icon className="h-4 w-4" aria-hidden="true" />
               {label}
@@ -147,12 +105,12 @@ export function AppShell({ children }: { children: ReactNode }) {
         aria-label="Main"
         className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-7 border-t bg-sidebar md:hidden"
       >
-        {MOBILE_NAV.map(({ to, label, icon: Icon, mobileTone }) => (
+        {MOBILE_NAV.map(({ to, label, icon: Icon }) => (
           <Link
             key={to}
             to={to}
             activeOptions={{ exact: to === "/" }}
-            className={`flex flex-col items-center gap-1 py-2 text-[10px] text-muted-foreground data-[status=active]:font-semibold data-[status=active]:text-sidebar-primary ${mobileTone}`}
+            className="flex flex-col items-center gap-1 py-2 text-[10px] text-muted-foreground data-[status=active]:font-semibold data-[status=active]:text-sidebar-primary"
           >
             <Icon className="h-5 w-5" aria-hidden="true" />
             {label}
