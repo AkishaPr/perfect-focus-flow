@@ -9,7 +9,7 @@ import {
 } from "./focus/segments";
 import { resolveMissedState, type Decision } from "./planner/recovery";
 import { describeReport, isCleanReport, sanitizeStoreData, type MigrationReport } from "./schema";
-import type { CalEvent, Goal, PlanBlock, Settings, StoreData, Task } from "./types";
+import type { CalEvent, Goal, PaperMark, PlanBlock, Settings, StoreData, Task } from "./types";
 
 export const STORE_VERSION = 1;
 
@@ -82,6 +82,9 @@ interface Actions {
   deleteSession: (id: string) => void;
   /** Stage 6: a timer started on this task, so it is no longer just "to do". */
   markTaskInProgress: (taskId: string) => void;
+  /** Stage 8: add or update a paper mark. The planner reads marks to spot weaker subjects. */
+  upsertMark: (m: PaperMark) => void;
+  deleteMark: (id: string) => void;
   /** Stage 7: apply the user's choices for missed work (carry over, skip, defer, done). */
   resolveMissed: (decisions: Decision[], now?: Date) => void;
 }
@@ -268,6 +271,8 @@ export const useStore = create<StoreData & Actions>()(
       logFocusSegment: (seg) => set((s) => recordFocusSegment(s, seg)),
       deleteSession: (id) => set((s) => deleteSessionState(s, id)),
       markTaskInProgress: (taskId) => set((s) => ({ tasks: markInProgress(s.tasks, taskId) })),
+      upsertMark: (m) => set((s) => ({ marks: upsert(s.marks, m) })),
+      deleteMark: (id) => set((s) => ({ marks: s.marks.filter((x) => x.id !== id) })),
       resolveMissed: (decisions, now) =>
         set((s) => resolveMissedState(s, decisions, now ?? new Date())),
     }),

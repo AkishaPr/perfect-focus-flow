@@ -8,5 +8,5 @@
 - [x] 5. Today dashboard + Start Next Task
 - [x] 6. Focus timer + sessions
 - [x] 7. Missed-task recovery flow
-- [ ] 8. Progress dashboard + paper marks
+- [x] 8. Progress dashboard + paper marks
 - [ ] 9. Polish

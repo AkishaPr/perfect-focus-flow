@@ -26,6 +26,13 @@ minutes from its estimate (a task with its whole estimate logged is reported as 
 and today's daily cap is reduced by `studiedMinOn`, the single definition of minutes studied on a
 day (sessions by `actualMin`, plus done/partial blocks no session points at).
 
+## Paper marks (Stage 8)
+
+`subjectWeakness` compares each subject's `recentAverage` (the average % of its latest `RECENT_PAPERS`
+papers) with the strongest subject's; a gap of 30+ points is fully weak. It needs marks in at least two
+subjects. The Progress page shows the same averages and explains the boost, so both read from
+`recentAverage`.
+
 ## Score (0–100)
 
 Weighted mean of six 0–1 factors using `settings.weights`: `deadline` (slack-based: free time before

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ComingSoon, PageHeader } from "@/components/AppShell";
+import { ProgressDashboard } from "@/components/ProgressDashboard";
 
 export const Route = createFileRoute("/progress")({
   head: () => ({
@@ -13,14 +13,5 @@ export const Route = createFileRoute("/progress")({
       },
     ],
   }),
-  component: ProgressPage,
+  component: ProgressDashboard,
 });
-
-function ProgressPage() {
-  return (
-    <>
-      <PageHeader title="Progress" subtitle="Study time, completed and missed work, paper marks." />
-      <ComingSoon stage="stage 8" />
-    </>
-  );
-}

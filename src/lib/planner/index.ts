@@ -33,7 +33,15 @@ import {
 
 export * from "./types";
 export { buildDaySlots, mergeIntervals, subtractIntervals, windowMinutes } from "./availability";
-export { buildScoringContext, remainingMin, scoreTask, spentMin, subjectWeakness } from "./scoring";
+export {
+  RECENT_PAPERS,
+  buildScoringContext,
+  recentAverage,
+  remainingMin,
+  scoreTask,
+  spentMin,
+  subjectWeakness,
+} from "./scoring";
 export { sessionDate, studiedMinOn } from "./studied";
 
 interface Candidate {
