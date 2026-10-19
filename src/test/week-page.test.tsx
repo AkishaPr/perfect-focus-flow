@@ -46,8 +46,7 @@ describe("week timetable", () => {
 
   it("draws the now line in today's column only", async () => {
     await renderWeek();
-    // The line carries a glow made from the accent colour; nothing else on the page does.
-    const lines = document.querySelectorAll("[class*='shadow-[0_0_6px_var(--signal)]']");
+    const lines = screen.getAllByTestId("now-line");
     expect(lines).toHaveLength(1);
     expect(screen.getByRole("group", { name: "Wednesday 21" }).contains(lines[0]!)).toBe(true);
   });
@@ -71,7 +70,7 @@ describe("week timetable", () => {
     expect(style("ICT club")).toContain("width: calc(100%");
   });
 
-  it("colours a planned study block by its subject", async () => {
+  it("shows a planned study block with its task title", async () => {
     useStore.setState({
       tasks: [makeTask({ id: "p", title: "Waves practice", subject: "physics" })],
       blocks: [
@@ -80,7 +79,7 @@ describe("week timetable", () => {
     });
     await renderWeek();
     const block = screen.getByTitle("Waves practice, 16:00–17:00");
-    expect(block.className).toContain("bg-physics");
+    expect(block.className).toContain("bg-primary");
   });
 
   it("shows a finished block as done and a missed one as missed", async () => {

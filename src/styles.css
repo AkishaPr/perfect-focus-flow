@@ -53,8 +53,10 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
-/* Two themes. Light is the default (set on :root); dark is a true-black theme with a mint-teal
-   accent, applied by the `dark` class on <html> (see src/lib/theme.ts). */
+/* Two themes. Light is the default (set on :root); dark is applied by the `dark` class on <html>
+   (see src/lib/theme.ts). The palette is taken from the design reference: charcoal surfaces,
+   a violet that runs to lilac, orange for work in progress, a rose red for urgent and a mint
+   green for done/low. Hex values are sampled from that reference. */
 :root {
   --radius: 0.75rem;
   --background: oklch(0.965 0.002 90);
@@ -63,84 +65,86 @@
   --card-foreground: oklch(0.18 0.004 90);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.18 0.004 90);
-  --primary: oklch(0.2 0.004 90);
-  --primary-foreground: oklch(0.985 0 0);
+  --primary: #5b4bd5;
+  --primary-foreground: #ffffff;
   --secondary: oklch(0.945 0.002 90);
   --secondary-foreground: oklch(0.22 0.004 90);
   --muted: oklch(0.95 0.002 90);
   --muted-foreground: oklch(0.48 0.006 90);
   --accent: oklch(0.94 0.003 90);
   --accent-foreground: oklch(0.18 0.004 90);
-  --destructive: oklch(0.52 0.19 27);
-  --destructive-foreground: oklch(0.99 0 0);
-  --warning: oklch(0.52 0.12 65);
-  --success: oklch(0.55 0.13 155);
-  --signal: oklch(0.82 0.16 82);
-  --signal-foreground: oklch(0.2 0.03 80);
-  --maths: oklch(0.55 0.15 255);
-  --physics: oklch(0.58 0.13 160);
-  --ict: oklch(0.54 0.17 320);
+  --destructive: #d6475e;
+  --destructive-foreground: #ffffff;
+  --warning: #b85c0e;
+  --success: #1f9d63;
+  --signal: #f08030;
+  --signal-foreground: #2a1503;
+  --maths: #6a5bd8;
+  --physics: #e07318;
+  --ict: #b857d4;
   --border: oklch(0.915 0.003 90);
   --input: oklch(0.89 0.003 90);
-  --ring: oklch(0.2 0.004 90);
-  --chart-1: oklch(0.82 0.16 82);
-  --chart-2: oklch(0.55 0.15 255);
-  --chart-3: oklch(0.58 0.13 160);
-  --chart-4: oklch(0.54 0.17 320);
-  --chart-5: oklch(0.52 0.19 27);
+  --ring: #5b4bd5;
+  --chart-1: #5b4bd5;
+  --chart-2: #f08030;
+  --chart-3: #b857d4;
+  --chart-4: #1f9d63;
+  --chart-5: #d6475e;
   --sidebar: oklch(0.985 0.002 90);
   --sidebar-foreground: oklch(0.3 0.005 90);
-  --sidebar-primary: oklch(0.2 0.004 90);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-primary: #5b4bd5;
+  --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: oklch(0.945 0.003 90);
   --sidebar-accent-foreground: oklch(0.18 0.004 90);
   --sidebar-border: oklch(0.92 0.003 90);
-  --sidebar-ring: oklch(0.2 0.004 90);
+  --sidebar-ring: #5b4bd5;
+  --gradient-brand: linear-gradient(90deg, #5b4bd5, #9a7ee6 55%, #d58cf0);
   --shadow-glow:
     0 0 0 1px color-mix(in oklab, var(--signal) 40%, transparent),
     0 12px 40px -12px color-mix(in oklab, var(--signal) 45%, transparent);
 }
 
 .dark {
-  --background: oklch(0.000 0 0);
-  --foreground: oklch(0.946 0 0);
-  --card: oklch(0.179 0.004 286);
-  --card-foreground: oklch(0.946 0 0);
-  --popover: oklch(0.228 0.006 286);
-  --popover-foreground: oklch(0.946 0 0);
-  --primary: oklch(0.855 0.125 181);
-  --primary-foreground: oklch(0.000 0 0);
-  --secondary: oklch(0.228 0.006 286);
-  --secondary-foreground: oklch(0.946 0 0);
-  --muted: oklch(0.228 0.006 286);
-  --muted-foreground: oklch(0.688 0.009 286);
-  --accent: oklch(0.228 0.006 286);
-  --accent-foreground: oklch(0.946 0 0);
-  --destructive: oklch(0.711 0.166 22);
-  --destructive-foreground: oklch(0.000 0 0);
-  --warning: oklch(0.837 0.164 84);
-  --success: oklch(0.800 0.182 152);
-  --signal: oklch(0.855 0.125 181);
-  --signal-foreground: oklch(0.000 0 0);
-  --maths: oklch(0.754 0.139 233);
-  --physics: oklch(0.800 0.182 152);
-  --ict: oklch(0.709 0.159 294);
-  --border: oklch(0.287 0.007 286);
-  --input: oklch(0.287 0.007 286);
-  --ring: oklch(0.855 0.125 181);
-  --chart-1: oklch(0.855 0.125 181);
-  --chart-2: oklch(0.754 0.139 233);
-  --chart-3: oklch(0.800 0.182 152);
-  --chart-4: oklch(0.709 0.159 294);
-  --chart-5: oklch(0.711 0.166 22);
-  --sidebar: oklch(0.000 0 0);
-  --sidebar-foreground: oklch(0.946 0 0);
-  --sidebar-primary: oklch(0.855 0.125 181);
-  --sidebar-primary-foreground: oklch(0.000 0 0);
-  --sidebar-accent: oklch(0.228 0.006 286);
-  --sidebar-accent-foreground: oklch(0.946 0 0);
-  --sidebar-border: oklch(0.287 0.007 286);
-  --sidebar-ring: oklch(0.855 0.125 181);
+  --background: #161618;
+  --foreground: #f1f1f2;
+  --card: #1e1e20;
+  --card-foreground: #f1f1f2;
+  --popover: #262528;
+  --popover-foreground: #f1f1f2;
+  --primary: #7a6ce6;
+  --primary-foreground: #ffffff;
+  --secondary: #262528;
+  --secondary-foreground: #f1f1f2;
+  --muted: #262528;
+  --muted-foreground: #8e8e93;
+  --accent: #2b2a2d;
+  --accent-foreground: #f1f1f2;
+  --destructive: #e5546a;
+  --destructive-foreground: #ffffff;
+  --warning: #f08030;
+  --success: #3fcf8e;
+  --signal: #f08030;
+  --signal-foreground: #1a0e04;
+  --maths: #8b7df0;
+  --physics: #f08030;
+  --ict: #e9a6f5;
+  --border: #2c2b2f;
+  --input: #2c2b2f;
+  --ring: #7a6ce6;
+  --chart-1: #7a6ce6;
+  --chart-2: #f08030;
+  --chart-3: #eeaffd;
+  --chart-4: #3fcf8e;
+  --chart-5: #e5546a;
+  --sidebar: #161618;
+  --sidebar-foreground: #e8e8ea;
+  --sidebar-primary: #7a6ce6;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #272629;
+  --sidebar-accent-foreground: #f1f1f2;
+  --sidebar-border: #2c2b2f;
+  --sidebar-ring: #7a6ce6;
+  --gradient-brand: linear-gradient(90deg, #6b5ce7, #a183e6 55%, #eeaffd);
   --shadow-glow:
     0 0 0 1px color-mix(in oklab, var(--signal) 40%, transparent),
     0 12px 40px -12px color-mix(in oklab, var(--signal) 45%, transparent);
@@ -167,11 +171,7 @@
   box-shadow: var(--shadow-glow);
 }
 
-/* Fine diagonal hatching: marks "time set aside" (study windows) without competing with events. */
-@utility bg-hatch {
-  background-image: repeating-linear-gradient(
-    135deg,
-    transparent 0 5px,
-    color-mix(in oklab, var(--foreground) 9%, transparent) 5px 6px
-  );
+/* The violet-to-lilac fill used for progress, as on the reference's task status bar. */
+@utility bg-brand-gradient {
+  background-image: var(--gradient-brand);
 }

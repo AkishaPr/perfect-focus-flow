@@ -10,10 +10,6 @@ import { SUBJECTS, SUBJECT_LABEL, type PaperMark, type Subject } from "@/lib/typ
  * Small hand-built charts (CSS bars and one SVG). Each has a text equivalent: bars carry their
  * value in an accessible label and as visible text, and the marks chart is described in words
  * with every mark also listed below it on the page. Colour is never the only signal.
- *
- * Colour rules (see subject-colors.ts): subject colours mean a subject; the accent (`signal`)
- * marks the one thing you are looking at (today, the selected week, your latest mark); the goal
- * is a neutral dashed line, and a check mark shows where it was reached.
  */
 
 const SUBJECT_STROKE: Record<Subject, string> = {
@@ -25,11 +21,6 @@ const SUBJECT_FILL: Record<Subject, string> = {
   maths: "fill-maths",
   physics: "fill-physics",
   ict: "fill-ict",
-};
-const SUBJECT_HALO: Record<Subject, string> = {
-  maths: "fill-maths/20",
-  physics: "fill-physics/20",
-  ict: "fill-ict/20",
 };
 
 const BAR_HEIGHT_REM = 8;
@@ -53,9 +44,9 @@ function GoalLine({ min, scale }: { min: number; scale: number }) {
       className="pointer-events-none absolute inset-x-0 z-10 list-none"
       style={{ top: `${PLOT_TOP_REM + (1 - min / scale) * BAR_HEIGHT_REM}rem` }}
     >
-      <div className="border-t border-dashed border-foreground/50" />
-      <span className="absolute -top-[1.15rem] right-0 rounded-sm bg-foreground px-1.5 py-px text-[10px] font-medium text-background">
-        Goal {formatMinutes(min)}
+      <div className="border-t border-dashed border-muted-foreground/60" />
+      <span className="absolute -top-[1.15rem] right-0 rounded bg-card px-1 text-[10px] text-muted-foreground">
+        goal {formatMinutes(min)}
       </span>
     </li>
   );
@@ -115,7 +106,7 @@ export function DailyBars({ week }: { week: WeekStudy }) {
             key={d.date}
             aria-label={`${long}: ${d.isFuture ? "not yet" : formatMinutes(d.totalMin)}`}
             title={`${long}: ${breakdown}`}
-            className={`flex min-w-0 flex-col items-center gap-1.5 rounded-lg pb-1.5 ${isToday ? "bg-signal/10" : ""}`}
+            className="flex min-w-0 flex-col items-center gap-1.5 pb-1.5"
           >
             <div
               aria-hidden="true"
@@ -139,11 +130,7 @@ export function DailyBars({ week }: { week: WeekStudy }) {
             </div>
             <span
               aria-hidden="true"
-              className={
-                isToday
-                  ? "rounded-full bg-signal px-2 py-0.5 text-[11px] font-semibold text-signal-foreground"
-                  : "px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
-              }
+              className={`text-[11px] ${isToday ? "font-semibold text-foreground" : "font-medium text-muted-foreground"}`}
             >
               {local(d.date).toLocaleDateString(undefined, { weekday: "short" })}
             </span>
@@ -189,7 +176,7 @@ export function WeeklyTrend({
             key={t.weekStart}
             aria-label={`Week of ${label}: ${formatMinutes(t.totalMin)}${isSelected ? " (selected)" : ""}`}
             title={`Week of ${label}: ${formatMinutes(t.totalMin)}`}
-            className={`flex min-w-0 flex-col items-center gap-1.5 rounded-lg pb-1.5 ${isSelected ? "bg-signal/10" : ""}`}
+            className="flex min-w-0 flex-col items-center gap-1.5 pb-1.5"
           >
             <div
               aria-hidden="true"
@@ -198,18 +185,14 @@ export function WeeklyTrend({
             >
               {t.totalMin > 0 && (
                 <div
-                  className={`w-full max-w-12 rounded-t-md ${isSelected ? "bg-signal" : "bg-foreground/25"}`}
+                  className={`w-full max-w-12 rounded-t-md ${isSelected ? "bg-primary" : "bg-primary/35"}`}
                   style={{ height: `${(t.totalMin / scale) * 100}%`, minHeight: 3 }}
                 />
               )}
             </div>
             <span
               aria-hidden="true"
-              className={
-                isSelected
-                  ? "rounded-full bg-signal px-2 py-0.5 text-[11px] font-semibold text-signal-foreground"
-                  : "px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
-              }
+              className={`text-[11px] ${isSelected ? "font-semibold text-foreground" : "text-muted-foreground"}`}
             >
               {local(t.weekStart).toLocaleDateString(undefined, { day: "numeric", month: "short" })}
             </span>
@@ -241,8 +224,7 @@ export function MarksChart({ marks }: { marks: PaperMark[] }) {
   const first = points[0]?.mark.date;
   const last = points[points.length - 1]?.mark.date;
 
-  // The latest mark of each subject gets a ring and a direct label, in the accent-free subject
-  // colour, so the chart can be read without a legend.
+  // The latest mark of each subject gets a ring and a direct value label.
   const latest = SUBJECTS.flatMap((s) => {
     const mine = points.filter((p) => p.subject === s);
     const p = mine[mine.length - 1];
@@ -329,7 +311,7 @@ export function MarksChart({ marks }: { marks: PaperMark[] }) {
       {points.map((p) => (
         <g key={p.id}>
           {isLatest.has(p.id) && (
-            <ellipse cx={x(p.x)} cy={y(p.y)} rx={10} ry={10} className={SUBJECT_HALO[p.subject]} />
+            <ellipse cx={x(p.x)} cy={y(p.y)} rx={10} ry={10} className="fill-foreground/10" />
           )}
           <circle
             cx={x(p.x)}
@@ -349,7 +331,7 @@ export function MarksChart({ marks }: { marks: PaperMark[] }) {
           key={p.id}
           x={x(p.x) + 14}
           y={labelY.get(p.id)}
-          className={`${SUBJECT_FILL[p.subject]} text-[12px] font-semibold`}
+          className="fill-foreground text-[12px] font-semibold"
         >
           {formatPercent(p.pct)}
         </text>

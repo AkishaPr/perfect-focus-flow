@@ -125,18 +125,18 @@ function WeekPage() {
         </span>
         <span aria-hidden="true" className="h-3 w-px bg-border" />
         <span className="flex items-center gap-1.5">
-          <span className="h-3 w-5 rounded-sm bg-foreground/80" /> Planned study
+          <span className="h-3 w-5 rounded-sm bg-primary" /> Planned study
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="h-3 w-5 rounded-sm border-l-2 border-l-foreground/60 bg-foreground/10" />{" "}
+          <span className="h-3 w-5 rounded-sm border-l-2 border-l-muted-foreground bg-muted" />{" "}
           Class or event
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="h-3 w-5 rounded-sm border border-dashed border-foreground/30 bg-hatch" />{" "}
+          <span className="h-3 w-5 rounded-sm border border-dashed border-primary/50 bg-primary/5" />{" "}
           Study window
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="h-0.5 w-5 rounded-full bg-signal" /> Now
+          <span className="h-0.5 w-5 rounded-full bg-primary" /> Now
         </span>
         <span className="sm:ml-auto">Click an empty slot to add an event.</span>
       </div>
@@ -159,19 +159,11 @@ function WeekPage() {
                 className="sticky top-0 z-20 border-b border-l bg-card px-2 py-1.5 text-center"
               >
                 <div
-                  className={`text-xs font-medium ${isToday ? "text-foreground" : "text-muted-foreground"}`}
+                  className={`text-xs font-medium ${isToday ? "text-primary" : "text-muted-foreground"}`}
                 >
                   {d.toLocaleDateString(undefined, { weekday: "short" })}
                 </div>
-                <div
-                  className={
-                    isToday
-                      ? "mx-auto mt-0.5 grid h-8 w-8 place-items-center rounded-full bg-signal font-display text-lg font-medium text-signal-foreground"
-                      : "mt-0.5 grid h-8 place-items-center font-display text-lg text-foreground"
-                  }
-                >
-                  {d.getDate()}
-                </div>
+                <div className="mt-0.5 font-display text-lg text-foreground">{d.getDate()}</div>
               </div>
             );
           })}
@@ -195,13 +187,12 @@ function WeekPage() {
             const clash = overlappingIds(evs);
             const slots = layoutOverlaps(evs);
             const isToday = ymd(d) === today;
-            const isWeekend = d.getDay() === 0 || d.getDay() === 6;
             return (
               <div
                 key={ymd(d)}
                 role="group"
                 aria-label={`${WEEKDAY_NAMES[d.getDay()]} ${d.getDate()}`}
-                className={`relative cursor-pointer border-l ${isToday ? "bg-signal/[0.07]" : isWeekend ? "bg-muted/40" : ""}`}
+                className={`relative cursor-pointer border-l `}
                 style={{ height: dayHeight }}
                 onClick={(ev) => {
                   const y = ev.clientY - ev.currentTarget.getBoundingClientRect().top;
@@ -225,7 +216,7 @@ function WeekPage() {
                 {windowsOn(windows, d).map((w, i) => (
                   <div
                     key={i}
-                    className="absolute inset-x-0.5 rounded-md border border-dashed border-foreground/25 bg-hatch"
+                    className="absolute inset-x-0.5 rounded-md border border-dashed border-primary/30 bg-primary/5"
                     style={{ top: top(w.start), height: height(w.start, w.end) }}
                   />
                 ))}
@@ -234,8 +225,8 @@ function WeekPage() {
                   const task = tasks.find((t) => t.id === b.taskId);
                   const missed = b.status === "missed";
                   const tone = missed
-                    ? "border border-dashed border-destructive/70 bg-destructive/10 text-destructive"
-                    : `${task ? SUBJECT_BG[task.subject] : "bg-primary"} text-primary-foreground ${b.status === "done" ? "opacity-60" : ""}`;
+                    ? "border border-dashed border-primary/60 bg-primary/10 text-foreground"
+                    : `bg-primary text-primary-foreground ${b.status === "done" ? "opacity-60" : ""}`;
                   return (
                     <div
                       key={b.id}
@@ -295,8 +286,8 @@ function WeekPage() {
                     className="pointer-events-none absolute inset-x-0 z-20"
                     style={{ top: (nowMin - START) * PX }}
                   >
-                    <div className="h-0.5 -translate-y-1/2 bg-signal shadow-[0_0_6px_var(--signal)]" />
-                    <span className="absolute -left-1 top-0 h-2.5 w-2.5 -translate-y-1/2 rounded-full bg-signal" />
+                    <div data-testid="now-line" className="h-0.5 -translate-y-1/2 bg-primary" />
+                    <span className="absolute -left-1 top-0 h-2.5 w-2.5 -translate-y-1/2 rounded-full bg-primary" />
                   </div>
                 )}
               </div>
