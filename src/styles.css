@@ -32,10 +32,6 @@
   --color-success: var(--success);
   --color-signal: var(--signal);
   --color-signal-foreground: var(--signal-foreground);
-  --color-violet: var(--violet);
-  --color-sky: var(--sky);
-  --color-amber: var(--amber);
-  --color-coral: var(--coral);
   --color-maths: var(--maths);
   --color-physics: var(--physics);
   --color-ict: var(--ict);
@@ -57,8 +53,9 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
-/* Two themes. Light is the default (set on :root); dark is a true-black theme with a mint-teal
-   accent, applied by the `dark` class on <html> (see src/lib/theme.ts). */
+/* Two themes. Light is the default (set on :root); dark is applied by the `dark` class on <html>
+   (see src/lib/theme.ts). Dark takes its colours from a reference dashboard: neutral graphite
+   surfaces with purple, orange, green, pink and red accents. */
 :root {
   --radius: 0.75rem;
   --background: oklch(0.965 0.002 90);
@@ -106,49 +103,45 @@
 }
 
 .dark {
-  --background: oklch(0.000 0 0);
-  --foreground: oklch(0.946 0 0);
-  --card: oklch(0.179 0.004 286);
-  --card-foreground: oklch(0.946 0 0);
-  --popover: oklch(0.228 0.006 286);
-  --popover-foreground: oklch(0.946 0 0);
-  --primary: oklch(0.855 0.125 181);
-  --primary-foreground: oklch(0.000 0 0);
-  --secondary: oklch(0.228 0.006 286);
-  --secondary-foreground: oklch(0.946 0 0);
-  --muted: oklch(0.228 0.006 286);
-  --muted-foreground: oklch(0.688 0.009 286);
-  --accent: oklch(0.228 0.006 286);
-  --accent-foreground: oklch(0.946 0 0);
-  --destructive: oklch(0.711 0.166 22);
-  --destructive-foreground: oklch(0.000 0 0);
-  --warning: oklch(0.837 0.164 84);
-  --success: oklch(0.800 0.182 152);
-  --signal: oklch(0.855 0.125 181);
-  --signal-foreground: oklch(0.000 0 0);
-  --violet: oklch(0.709 0.159 294);
-  --sky: oklch(0.754 0.139 233);
-  --amber: oklch(0.837 0.164 84);
-  --coral: oklch(0.719 0.169 13);
-  --maths: oklch(0.754 0.139 233);
-  --physics: oklch(0.800 0.182 152);
-  --ict: oklch(0.709 0.159 294);
-  --border: oklch(0.287 0.007 286);
-  --input: oklch(0.287 0.007 286);
-  --ring: oklch(0.855 0.125 181);
-  --chart-1: oklch(0.855 0.125 181);
-  --chart-2: oklch(0.709 0.159 294);
-  --chart-3: oklch(0.754 0.139 233);
-  --chart-4: oklch(0.837 0.164 84);
-  --chart-5: oklch(0.719 0.169 13);
-  --sidebar: oklch(0.000 0 0);
-  --sidebar-foreground: oklch(0.946 0 0);
-  --sidebar-primary: oklch(0.855 0.125 181);
-  --sidebar-primary-foreground: oklch(0.000 0 0);
-  --sidebar-accent: oklch(0.228 0.006 286);
-  --sidebar-accent-foreground: oklch(0.946 0 0);
-  --sidebar-border: oklch(0.287 0.007 286);
-  --sidebar-ring: oklch(0.855 0.125 181);
+  --background: oklch(0.201 0.004 286);
+  --foreground: oklch(1 0 0);
+  --card: oklch(0.25 0.006 301);
+  --card-foreground: oklch(1 0 0);
+  --popover: oklch(0.294 0.004 286);
+  --popover-foreground: oklch(1 0 0);
+  --primary: oklch(0.943 0 0);
+  --primary-foreground: oklch(0.201 0.004 286);
+  --secondary: oklch(0.275 0.006 301);
+  --secondary-foreground: oklch(1 0 0);
+  --muted: oklch(0.275 0.006 301);
+  --muted-foreground: oklch(0.7 0.003 286);
+  --accent: oklch(0.275 0.006 301);
+  --accent-foreground: oklch(1 0 0);
+  --destructive: oklch(0.655 0.221 17);
+  --destructive-foreground: oklch(0.201 0.004 286);
+  --warning: oklch(0.705 0.181 51);
+  --success: oklch(0.732 0.156 154);
+  --signal: oklch(0.725 0.164 52);
+  --signal-foreground: oklch(0.201 0.004 286);
+  --maths: oklch(0.674 0.138 284);
+  --physics: oklch(0.732 0.156 154);
+  --ict: oklch(0.84 0.124 320);
+  --border: oklch(0.3 0.007 297);
+  --input: oklch(0.3 0.007 297);
+  --ring: oklch(0.674 0.138 284);
+  --chart-1: oklch(0.674 0.138 284);
+  --chart-2: oklch(0.725 0.164 52);
+  --chart-3: oklch(0.732 0.156 154);
+  --chart-4: oklch(0.84 0.124 320);
+  --chart-5: oklch(0.655 0.221 17);
+  --sidebar: oklch(0.25 0.006 301);
+  --sidebar-foreground: oklch(1 0 0);
+  --sidebar-primary: oklch(0.674 0.138 284);
+  --sidebar-primary-foreground: oklch(0.201 0.004 286);
+  --sidebar-accent: oklch(0.275 0.006 301);
+  --sidebar-accent-foreground: oklch(1 0 0);
+  --sidebar-border: oklch(0.3 0.007 297);
+  --sidebar-ring: oklch(0.674 0.138 284);
   --shadow-glow:
     0 0 0 1px color-mix(in oklab, var(--signal) 40%, transparent),
     0 12px 40px -12px color-mix(in oklab, var(--signal) 45%, transparent);
