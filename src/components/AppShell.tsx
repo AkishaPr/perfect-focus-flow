@@ -28,7 +28,8 @@ const SETTINGS_ITEM = { to: "/settings", label: "Settings", icon: Settings } as 
 const MOBILE_NAV = [...NAV, SETTINGS_ITEM] as const;
 
 const NAV_LINK = "flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm transition-colors";
-const NAV_ACTIVE = "bg-sidebar-primary font-medium text-sidebar-primary-foreground";
+const NAV_ACTIVE =
+  "bg-sidebar-primary font-medium text-sidebar-primary-foreground dark:bg-sidebar-accent dark:text-sidebar-accent-foreground";
 const NAV_IDLE =
   "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground";
 
