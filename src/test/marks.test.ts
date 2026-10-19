@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chartGeometry, markError, markPercent, marksBySubject } from "@/lib/marks";
+import { chartGeometry, markError, markPercent, marksBySubject, spreadLabels } from "@/lib/marks";
 import { recentAverage, subjectWeakness } from "@/lib/planner";
 import { SUBJECTS, type PaperMark, type Subject } from "@/lib/types";
 import { makeMark } from "./planner-fixtures";
@@ -227,5 +227,36 @@ describe("chartGeometry", () => {
     const g = chartGeometry([]);
     expect(g.points).toEqual([]);
     expect(g.domain.max - g.domain.min).toBeGreaterThanOrEqual(20);
+  });
+});
+
+describe("spreadLabels", () => {
+  it("leaves labels that are already apart exactly where they are", () => {
+    expect(spreadLabels([20, 60, 120], 14, 0, 200)).toEqual([20, 60, 120]);
+  });
+
+  it("pushes colliding labels apart by at least the gap, keeping their order", () => {
+    const r = spreadLabels([50, 52, 51], 14, 0, 200);
+    // input order is [50, 52, 51]: the 50 stays highest, then 51, then 52
+    expect(r[0]).toBeLessThan(r[2]!);
+    expect(r[2]).toBeLessThan(r[1]!);
+    expect(r[2]! - r[0]!).toBeGreaterThanOrEqual(14);
+    expect(r[1]! - r[2]!).toBeGreaterThanOrEqual(14);
+  });
+
+  it("keeps every label inside the allowed range", () => {
+    const r = spreadLabels([196, 198, 199], 14, 10, 200);
+    for (const y of r) {
+      expect(y).toBeGreaterThanOrEqual(10);
+      expect(y).toBeLessThanOrEqual(200);
+    }
+    const sorted = [...r].sort((a, b) => a - b);
+    expect(sorted[1]! - sorted[0]!).toBeGreaterThanOrEqual(14);
+    expect(sorted[2]! - sorted[1]!).toBeGreaterThanOrEqual(14);
+  });
+
+  it("handles no labels and one label", () => {
+    expect(spreadLabels([], 14, 0, 100)).toEqual([]);
+    expect(spreadLabels([30], 14, 0, 100)).toEqual([30]);
   });
 });

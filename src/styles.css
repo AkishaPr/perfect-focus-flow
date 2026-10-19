@@ -166,3 +166,12 @@
 @utility shadow-glow {
   box-shadow: var(--shadow-glow);
 }
+
+/* Fine diagonal hatching: marks "time set aside" (study windows) without competing with events. */
+@utility bg-hatch {
+  background-image: repeating-linear-gradient(
+    135deg,
+    transparent 0 5px,
+    color-mix(in oklab, var(--foreground) 9%, transparent) 5px 6px
+  );
+}
