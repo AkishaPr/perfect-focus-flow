@@ -66,7 +66,7 @@ describe("Today page", () => {
     });
     const stars = within(why).getByRole("img", { name: "Importance 4 of 5" });
     expect(stars.querySelectorAll("svg")).toHaveLength(5);
-    expect(stars.querySelectorAll("svg.fill-amber-400")).toHaveLength(4);
+    expect(stars.querySelectorAll('svg[data-filled="true"]')).toHaveLength(4);
     expect(why).not.toHaveTextContent("4/5");
   });
 

@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 const MAX_STARS = 5;
 
 /**
- * A 1–5 rating as gold stars: filled for the value, outlined for the rest.
+ * A 1–5 rating as outlined stars: gold for the value, grey for the rest.
  * The accessible name carries the number, so the stars are never the only signal.
  */
 export function StarRating({
@@ -22,18 +22,14 @@ export function StarRating({
       role="img"
       aria-label={`${label} ${filled} of ${MAX_STARS}`}
       title={`${label} ${filled} of ${MAX_STARS}`}
-      className={cn("inline-flex items-center gap-0.5", className)}
+      className={cn("inline-flex items-center gap-1.5", className)}
     >
       {Array.from({ length: MAX_STARS }, (_, i) => (
         <Star
           key={i}
           aria-hidden="true"
-          className={cn(
-            "h-3.5 w-3.5",
-            i < filled
-              ? "fill-amber-400 text-amber-400"
-              : "fill-transparent text-muted-foreground/40",
-          )}
+          data-filled={i < filled}
+          className={cn("h-4 w-4", i < filled ? "text-yellow-500" : "text-muted-foreground")}
         />
       ))}
     </span>
