@@ -5,6 +5,9 @@ import type { FactorKey, ScoreBreakdown } from "./types";
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
+/** The importance reason's text. Exported so the UI can recognise it and draw stars instead. */
+export const importanceReason = (importance: number) => `Importance ${importance}/5`;
+
 function reasonFor(key: FactorKey, task: Task, b: ScoreBreakdown, ctx: ScoringContext): string {
   switch (key) {
     case "overdue":
@@ -14,7 +17,7 @@ function reasonFor(key: FactorKey, task: Task, b: ScoreBreakdown, ctx: ScoringCo
         ? `Due ${task.deadline}, tight on time`
         : `Due ${task.deadline}`;
     case "importance":
-      return `Importance ${task.importance}/5`;
+      return importanceReason(task.importance);
     case "weakTopic":
       return isWeakTopic(task, ctx)
         ? `Weak topic: ${task.topic}`
