@@ -2,12 +2,14 @@ import { Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, Check, Clock, Play, Timer, Undo2 } from "lucide-react";
 import { PageHeader } from "@/components/AppShell";
+import { StarRating } from "@/components/StarRating";
 import { Recovery } from "@/components/Recovery";
 import { TaskDialog } from "@/components/TaskDialog";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useNow } from "@/hooks/use-now";
 import { buildReview, snapshotDay } from "@/lib/planner/recovery";
+import { importanceReason } from "@/lib/planner/explain";
 import { buildToday, type TimelineEntry } from "@/lib/planner/today";
 import { resolveReview, usePlanLog } from "@/lib/recovery/log";
 import type { PlannerWarning } from "@/lib/planner";
@@ -226,7 +228,11 @@ export function Today({ now: nowOverride }: { now?: Date }) {
                       key={r}
                       className="rounded-full border px-2.5 py-0.5 text-xs text-muted-foreground"
                     >
-                      {r}
+                      {r === importanceReason(next.task.importance) ? (
+                        <StarRating value={next.task.importance} />
+                      ) : (
+                        r
+                      )}
                     </li>
                   ))}
                 </ul>

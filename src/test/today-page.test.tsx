@@ -50,6 +50,26 @@ describe("Today page", () => {
     expect(within(next).getByRole("button", { name: /Start next task/ })).toBeEnabled();
   });
 
+  it("shows importance as gold stars, not a fraction", async () => {
+    seed([
+      makeTask({
+        id: "a",
+        title: "Integration homework",
+        estimateMin: 45,
+        deadline: "2026-10-17",
+        importance: 4,
+      }),
+    ]);
+    await renderToday();
+    const why = within(screen.getByRole("region", { name: "Next task" })).getByRole("list", {
+      name: "Why this task",
+    });
+    const stars = within(why).getByRole("img", { name: "Importance 4 of 5" });
+    expect(stars.querySelectorAll("svg")).toHaveLength(5);
+    expect(stars.querySelectorAll("svg.fill-amber-400")).toHaveLength(4);
+    expect(why).not.toHaveTextContent("4/5");
+  });
+
   it("Start commits the block and switches to the in-progress card", async () => {
     seed();
     await renderToday();
