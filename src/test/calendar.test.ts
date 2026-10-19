@@ -4,6 +4,7 @@ import {
   blocksOn,
   eventsOn,
   fromMin,
+  layoutOverlaps,
   overlappingIds,
   toMin,
   weekStart,
@@ -140,5 +141,62 @@ describe("windowsOn / blocksOn", () => {
     expect(
       blocksOn([b("1", "2026-10-16"), b("2", "2026-10-17")], new Date(2026, 9, 16)),
     ).toHaveLength(1);
+  });
+});
+
+describe("layoutOverlaps", () => {
+  const slot = (evs: CalEvent[]) => Object.fromEntries(layoutOverlaps(evs));
+
+  it("gives a lone event the whole width", () => {
+    expect(slot([ev({ id: "a" })])).toEqual({ a: { col: 0, cols: 1 } });
+  });
+
+  it("puts two overlapping events side by side", () => {
+    const r = slot([
+      ev({ id: "a", start: "14:00", end: "16:00" }),
+      ev({ id: "b", start: "15:00", end: "17:00" }),
+    ]);
+    expect(r).toEqual({ a: { col: 0, cols: 2 }, b: { col: 1, cols: 2 } });
+  });
+
+  it("lets back-to-back events keep the full width", () => {
+    const r = slot([
+      ev({ id: "a", start: "14:00", end: "15:00" }),
+      ev({ id: "b", start: "15:00", end: "16:00" }),
+    ]);
+    expect(r).toEqual({ a: { col: 0, cols: 1 }, b: { col: 0, cols: 1 } });
+  });
+
+  it("reuses a free column inside one cluster and sizes every event in it alike", () => {
+    // a overlaps b and c; b and c do not overlap each other, so two columns are enough.
+    const r = slot([
+      ev({ id: "a", start: "09:00", end: "12:00" }),
+      ev({ id: "b", start: "09:30", end: "10:30" }),
+      ev({ id: "c", start: "11:00", end: "11:45" }),
+    ]);
+    expect(r["a"]).toEqual({ col: 0, cols: 2 });
+    expect(r["b"]).toEqual({ col: 1, cols: 2 });
+    expect(r["c"]).toEqual({ col: 1, cols: 2 });
+  });
+
+  it("keeps separate clusters independent", () => {
+    const r = slot([
+      ev({ id: "a", start: "08:00", end: "09:00" }),
+      ev({ id: "b", start: "08:30", end: "09:30" }),
+      ev({ id: "c", start: "13:00", end: "14:00" }),
+    ]);
+    expect(r["c"]).toEqual({ col: 0, cols: 1 });
+    expect(r["a"]?.cols).toBe(2);
+  });
+
+  it("agrees with overlappingIds about who is in a clash", () => {
+    const evs = [
+      ev({ id: "a", start: "09:00", end: "10:00" }),
+      ev({ id: "b", start: "09:30", end: "10:30" }),
+      ev({ id: "c", start: "12:00", end: "13:00" }),
+    ];
+    const clash = overlappingIds(evs);
+    const slots = layoutOverlaps(evs);
+    for (const e of evs) expect(clash.has(e.id)).toBe(slots.get(e.id)!.cols > 1);
   });
 });

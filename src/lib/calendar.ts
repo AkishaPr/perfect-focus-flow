@@ -53,3 +53,45 @@ export function overlappingIds(evs: CalEvent[]): Set<string> {
     }
   return out;
 }
+
+export interface EventSlot {
+  /** Which column (0-based) the event sits in when overlapping events share the day. */
+  col: number;
+  /** How many columns its cluster of overlapping events needs. 1 means it has the day to itself. */
+  cols: number;
+}
+
+/**
+ * Side-by-side layout for events that overlap in time, so none is hidden behind another.
+ * Events that chain together by overlap form a cluster; each cluster is split into as few
+ * columns as it needs, and every event in it gets the same column count (equal widths).
+ */
+export function layoutOverlaps(evs: CalEvent[]): Map<string, EventSlot> {
+  const out = new Map<string, EventSlot>();
+  const sorted = [...evs].sort(
+    (a, b) => toMin(a.start) - toMin(b.start) || toMin(a.end) - toMin(b.end),
+  );
+  let cluster: { ev: CalEvent; col: number }[] = [];
+  let colEnds: number[] = [];
+  let clusterEnd = -1;
+
+  const flush = () => {
+    for (const { ev, col } of cluster) out.set(ev.id, { col, cols: colEnds.length });
+    cluster = [];
+    colEnds = [];
+    clusterEnd = -1;
+  };
+
+  for (const ev of sorted) {
+    const start = toMin(ev.start);
+    const end = Math.max(toMin(ev.end), start);
+    if (cluster.length > 0 && start >= clusterEnd) flush();
+    let col = colEnds.findIndex((e) => e <= start);
+    if (col === -1) col = colEnds.length;
+    colEnds[col] = end;
+    cluster.push({ ev, col });
+    clusterEnd = Math.max(clusterEnd, end);
+  }
+  flush();
+  return out;
+}

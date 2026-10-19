@@ -133,3 +133,25 @@ export function chartGeometry(marks: PaperMark[]): ChartGeometry {
     })),
   };
 }
+
+/**
+ * Nudges label positions (top to bottom, in px) apart so labels that would land on the same spot
+ * stay readable. Order is kept; each label moves as little as it can, within [lo, hi].
+ */
+export function spreadLabels(ys: number[], minGap: number, lo: number, hi: number): number[] {
+  const order = ys.map((y, i) => ({ y, i })).sort((a, b) => a.y - b.y || a.i - b.i);
+  const placed = order.map((o) => Math.min(hi, Math.max(lo, o.y)));
+  for (let k = 1; k < placed.length; k++) {
+    placed[k] = Math.max(placed[k]!, placed[k - 1]! + minGap);
+  }
+  // If pushing down ran past the bottom edge, pull the stack back up.
+  for (let k = placed.length - 1; k >= 0; k--) {
+    const limit = k === placed.length - 1 ? hi : placed[k + 1]! - minGap;
+    placed[k] = Math.min(placed[k]!, limit);
+  }
+  const out = new Array<number>(ys.length);
+  order.forEach((o, k) => {
+    out[o.i] = placed[k]!;
+  });
+  return out;
+}
