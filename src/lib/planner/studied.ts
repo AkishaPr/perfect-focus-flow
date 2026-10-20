@@ -1,11 +1,10 @@
-import { toMin } from "../calendar";
+import { studyDayKey, toMin } from "../calendar";
 import type { PlanBlock, Session } from "../types";
-import { ymd } from "./dates";
 
 /** The local calendar day a session started on, or null if its timestamp can't be read. */
 export function sessionDate(s: Pick<Session, "start">): string | null {
   const d = new Date(s.start);
-  return Number.isNaN(d.getTime()) ? null : ymd(d);
+  return Number.isNaN(d.getTime()) ? null : studyDayKey(d);
 }
 
 /**
