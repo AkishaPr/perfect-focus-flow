@@ -130,14 +130,15 @@ describe("studyForWeek", () => {
     expect(w.otherMin).toBe(20);
   });
 
-  it("puts a late-Sunday session in Sunday and an early-Monday one in Monday", () => {
+  it("assigns sessions before 02:30 to the previous study day, including across Sunday night", () => {
     const after = at(26, 12);
     const d = data({
       sessions: [sess("sun", "m", at(25, 23, 30), 20), sess("mon", "m", at(26, 0, 10), 15)],
     });
-    expect(studyForWeek(d, at(25, 12), after).days[6]?.totalMin).toBe(20);
-    expect(studyForWeek(d, at(26, 12), after).days[0]?.totalMin).toBe(15);
-    expect(studyForWeek(d, at(25, 12), after).totalMin).toBe(20);
+    const week = studyForWeek(d, at(25, 12), after);
+    expect(week.days[6]?.totalMin).toBe(35);
+    expect(studyForWeek(d, at(26, 12), after).days[0]?.totalMin).toBe(0);
+    expect(week.totalMin).toBe(35);
   });
 
   it("treats a past week as seven elapsed days, and ignores sessions dated in the future", () => {
