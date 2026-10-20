@@ -4,9 +4,9 @@ import { Today } from "@/components/Today";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Today — A/L Command Center" },
+      { title: "Today — Mission UCSC" },
       { name: "description", content: "Fixed events, today's plan and your next task." },
-      { property: "og:title", content: "Today — A/L Command Center" },
+      { property: "og:title", content: "Today — Mission UCSC" },
       { property: "og:description", content: "Fixed events, today's plan and your next task." },
     ],
   }),
