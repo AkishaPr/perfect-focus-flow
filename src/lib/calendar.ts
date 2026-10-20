@@ -10,6 +10,13 @@ export const fromMin = (m: number) =>
 export const ymd = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
+/** Personal study day: dates before 02:30 belong to the previous study day. */
+export function studyDayKey(d: Date): string {
+  const day = new Date(d);
+  if (day.getHours() * 60 + day.getMinutes() < 150) day.setDate(day.getDate() - 1);
+  return ymd(day);
+}
+
 /** Monday of the week containing d. */
 export function weekStart(d: Date) {
   const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
