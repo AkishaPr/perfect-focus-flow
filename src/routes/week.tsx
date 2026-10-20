@@ -24,9 +24,9 @@ import type { CalEvent } from "@/lib/types";
 export const Route = createFileRoute("/week")({
   head: () => ({
     meta: [
-      { title: "Week — A/L Command Center" },
+      { title: "Week — Mission UCSC" },
       { name: "description", content: "Recurring classes, events and planned study blocks." },
-      { property: "og:title", content: "Week — A/L Command Center" },
+      { property: "og:title", content: "Week — Mission UCSC" },
       {
         property: "og:description",
         content: "Recurring classes, events and planned study blocks.",
