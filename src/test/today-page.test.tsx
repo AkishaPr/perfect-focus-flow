@@ -160,4 +160,109 @@ describe("Today page", () => {
     expect(screen.getByText(/50% of your 4h goal/)).toBeInTheDocument();
     expect(screen.getByRole("progressbar", { name: /today's study goal/i })).toBeInTheDocument();
   });
+
+  it("splits today's study by subject and shows deleted-task time as Other", async () => {
+    seed([makeTask({ id: "m", title: "Maths task", subject: "maths" })]);
+    useStore.setState({
+      blocks: [
+        { id: "d1", taskId: "m", date: "2026-10-19", start: "07:00", end: "08:00", status: "done" },
+        {
+          id: "d2",
+          taskId: "gone",
+          date: "2026-10-19",
+          start: "09:00",
+          end: "09:30",
+          status: "done",
+        },
+      ],
+    });
+    await renderToday();
+    const glance = screen.getByRole("complementary", { name: "Today at a glance" });
+    expect(within(glance).getByText("1h 00m")).toBeInTheDocument(); // Maths
+    expect(within(glance).getByText("Other")).toBeInTheDocument();
+    expect(within(glance).getByText("30m")).toBeInTheDocument();
+  });
+
+  it("puts a now line in the timeline where the clock is", async () => {
+    seed([makeTask({ id: "a", title: "Integration homework", estimateMin: 45 })]);
+    useStore.setState({
+      blocks: [
+        {
+          id: "d1",
+          taskId: "gone",
+          date: "2026-10-19",
+          start: "07:00",
+          end: "08:00",
+          status: "done",
+        },
+      ],
+    });
+    await renderToday();
+    const timeline = within(screen.getByRole("region", { name: "Today's timeline" }));
+    const items = timeline.getAllByRole("listitem");
+    // finished block, then the current time, then what's planned
+    expect(items[0]).toHaveTextContent("Done");
+    expect(items[1]).toHaveTextContent("Current time 16:00");
+    expect(items[2]).toHaveTextContent("Integration homework");
+  });
+
+  it("shows how much of the planned block is left while a task is in progress", async () => {
+    seed();
+    await renderToday(at(19, 16, 0));
+    fireEvent.click(screen.getByRole("button", { name: /Start next task/ }));
+    const active = await screen.findByRole("region", { name: "In progress" });
+    expect(within(active).getByRole("img", { name: "45m left in block" })).toBeInTheDocument();
+    // no "now" line in the timeline: the in-progress row carries the marker
+    expect(screen.queryByText(/Current time/)).toBeNull();
+  });
+
+  it("says when a block has gone past its planned end", async () => {
+    seed();
+    await renderToday(at(19, 16, 0));
+    fireEvent.click(screen.getByRole("button", { name: /Start next task/ }));
+    cleanup();
+    await renderToday(at(19, 17, 0)); // 15 minutes after the 16:45 end
+    const active = await screen.findByRole("region", { name: "In progress" });
+    expect(within(active).getByRole("img", { name: "+15m past planned end" })).toBeInTheDocument();
+  });
+
+  it("lists the longest-overdue task and opens it for rescheduling", async () => {
+    seed([
+      makeTask({ id: "a", title: "Late paper", deadline: "2026-10-15" }),
+      makeTask({ id: "b", title: "Late notes", deadline: "2026-10-18" }),
+    ]);
+    await renderToday();
+    const glance = screen.getByRole("complementary", { name: "Today at a glance" });
+    expect(within(glance).getByText("4 days overdue")).toBeInTheDocument();
+    expect(within(glance).getByText(/and 1 more in/)).toBeInTheDocument();
+    fireEvent.click(within(glance).getByRole("button", { name: "Reschedule" }));
+    expect(await screen.findByRole("heading", { name: "Edit task" })).toBeInTheDocument();
+  });
+
+  it("opens an empty task form from Add task", async () => {
+    seed([]);
+    await renderToday();
+    fireEvent.click(screen.getByRole("button", { name: /Add task/ }));
+    expect(await screen.findByRole("heading", { name: "New task" })).toBeInTheDocument();
+  });
+
+  it("describes the week chart in words, not just bar heights", async () => {
+    seed();
+    useStore.setState({
+      blocks: [
+        {
+          id: "d1",
+          taskId: "gone",
+          date: "2026-10-19",
+          start: "07:00",
+          end: "09:00",
+          status: "done",
+        },
+      ],
+    });
+    await renderToday();
+    const chart = screen.getByRole("img", { name: /^Study time per day\./ });
+    expect(chart.getAttribute("aria-label")).toMatch(/Monday 2h/);
+    expect(chart.getAttribute("aria-label")).toMatch(/Tuesday not yet/);
+  });
 });
