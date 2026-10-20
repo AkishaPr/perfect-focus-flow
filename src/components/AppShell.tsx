@@ -52,7 +52,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             A/L
           </div>
           <div className="min-w-0">
-            <div className="font-display text-sm font-semibold leading-tight">Command Center</div>
+            <div className="font-display text-sm font-semibold leading-tight">Mission UCSC</div>
             <div className="text-xs text-muted-foreground">Maths · Physics · ICT</div>
           </div>
         </div>
