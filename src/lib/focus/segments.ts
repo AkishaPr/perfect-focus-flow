@@ -1,4 +1,4 @@
-import { fromMin, toMin, ymd } from "../calendar";
+import { fromMin, studyDayKey, toMin, ymd } from "../calendar";
 import type { PlanBlock, Session, Task } from "../types";
 
 /**
@@ -36,7 +36,7 @@ function spanOf(startedAtMs: number, endedAtMs: number, minutes: number) {
     // Never shorter than the minutes studied, whatever rounding did to the clock times.
     Math.max(sameDay ? toMin(hhmm(end)) : LAST_MINUTE, startMin + minutes),
   );
-  return { date: ymd(start), start: fromMin(startMin), end: fromMin(endMin) };
+  return { date: studyDayKey(start), start: fromMin(startMin), end: fromMin(endMin) };
 }
 
 /**
