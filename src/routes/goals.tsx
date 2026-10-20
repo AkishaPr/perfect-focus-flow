@@ -13,9 +13,9 @@ import { TASK_TYPES, type Goal, type TaskType } from "@/lib/types";
 export const Route = createFileRoute("/goals")({
   head: () => ({
     meta: [
-      { title: "Weekly goals — A/L Command Center" },
+      { title: "Weekly goals — Mission UCSC" },
       { name: "description", content: "Targets for papers, revision, homework and recordings." },
-      { property: "og:title", content: "Weekly goals — A/L Command Center" },
+      { property: "og:title", content: "Weekly goals — Mission UCSC" },
       {
         property: "og:description",
         content: "Targets for papers, revision, homework and recordings.",
