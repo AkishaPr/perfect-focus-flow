@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { generatePlan, sessionDate, studiedMinOn } from "@/lib/planner";
+import { studyDayKey } from "@/lib/calendar";
 import { buildToday } from "@/lib/planner/today";
 import {
   at,
@@ -20,10 +21,18 @@ const session = (over: Parameters<typeof makeSession>[0] = {}) =>
     ...over,
   });
 
+describe("studyDayKey", () => {
+  it("keeps times before 02:30 on the previous study day", () => {
+    expect(studyDayKey(at(20, 2, 29))).toBe("2026-10-19");
+    expect(studyDayKey(at(20, 2, 30))).toBe("2026-10-20");
+  });
+});
+
 describe("sessionDate", () => {
   it("is the local day the session started on", () => {
     expect(sessionDate({ start: at(19, 23, 50).toISOString() })).toBe("2026-10-19");
-    expect(sessionDate({ start: at(20, 0, 5).toISOString() })).toBe("2026-10-20");
+    expect(sessionDate({ start: at(20, 0, 5).toISOString() })).toBe("2026-10-19");
+    expect(sessionDate({ start: at(20, 2, 30).toISOString() })).toBe("2026-10-20");
   });
   it("is null for a timestamp that can't be read", () => {
     expect(sessionDate({ start: "yesterday-ish" })).toBeNull();
