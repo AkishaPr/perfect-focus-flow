@@ -1,4 +1,4 @@
-import { eventsOn, toMin, ymd } from "../calendar";
+import { eventsOn, studyDayKey, toMin, ymd } from "../calendar";
 import type { CalEvent, PlanBlock, StoreData, Task } from "../types";
 import { startOfDay } from "./dates";
 import { generatePlan } from "./index";
@@ -184,7 +184,7 @@ export function buildToday(data: TodayData, now: Date, options: PlannerOptions =
   const open = data.tasks.filter((t) => t.status !== "done" && t.status !== "deferred");
   const stats: TodayStats = {
     plannedMin: plan.capacity[0]?.plannedMin ?? 0,
-    doneMin: studiedMinOn(todayStr, data.blocks, data.sessions),
+    doneMin: studiedMinOn(studyDayKey(now), data.blocks, data.sessions),
     dailyGoalMin: data.settings.dailyGoalMin,
     dueToday: open.filter((t) => t.deadline === todayStr).length,
     overdue: open.filter((t) => t.deadline !== undefined && t.deadline < todayStr).length,
