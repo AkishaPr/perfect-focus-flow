@@ -81,7 +81,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "A/L Command Center" },
+      { title: "Mission UCSC" },
       { name: "description", content: "Personal study planner for GCE A/L Maths stream." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
