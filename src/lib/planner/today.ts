@@ -206,3 +206,29 @@ export function buildToday(data: TodayData, now: Date, options: PlannerOptions =
     ),
   };
 }
+
+export interface OverdueTask {
+  task: Task;
+  daysOverdue: number;
+}
+
+/**
+ * Open tasks whose deadline has passed, longest overdue first. "Open" is the same definition
+ * `buildToday` uses for `stats.overdue`, so the list and the count always agree.
+ */
+export function overdueTasks(tasks: Task[], today: string): OverdueTask[] {
+  const day = (d: string) => new Date(`${d}T00:00:00`).getTime();
+  return tasks
+    .filter(
+      (t) =>
+        t.status !== "done" &&
+        t.status !== "deferred" &&
+        t.deadline !== undefined &&
+        t.deadline < today,
+    )
+    .map((task) => ({
+      task,
+      daysOverdue: Math.round((day(today) - day(task.deadline!)) / 86_400_000),
+    }))
+    .sort((a, z) => z.daysOverdue - a.daysOverdue || a.task.title.localeCompare(z.task.title));
+}

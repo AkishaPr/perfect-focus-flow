@@ -28,3 +28,10 @@ export const SUBJECT_EVENT: Record<Subject, string> = {
   physics: "border-l-physics bg-physics/15",
   ict: "border-l-ict bg-ict/15",
 };
+
+/** A planned or finished study block: a lighter tint than a fixed event, same solid left edge. */
+export const SUBJECT_BLOCK: Record<Subject, string> = {
+  maths: "border-l-maths bg-maths/10",
+  physics: "border-l-physics bg-physics/10",
+  ict: "border-l-ict bg-ict/10",
+};

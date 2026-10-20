@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildToday, type TodayData } from "@/lib/planner/today";
+import { buildToday, overdueTasks, type TodayData } from "@/lib/planner/today";
 import {
   at,
   dailyWindow,
@@ -177,5 +177,35 @@ describe("buildToday: timeline and numbers", () => {
     );
     expect(view.next).toBeNull();
     expect(view.warnings.map((w) => w.code)).toContain("no-study-windows");
+  });
+});
+
+describe("overdueTasks", () => {
+  it("lists open tasks past their deadline, longest overdue first, with the days overdue", () => {
+    const list = overdueTasks(
+      [
+        makeTask({ id: "a", title: "Recent", deadline: "2026-10-18" }),
+        makeTask({ id: "b", title: "Old", deadline: "2026-10-12" }),
+        makeTask({ id: "c", title: "Due today", deadline: "2026-10-19" }),
+        makeTask({ id: "d", title: "No deadline" }),
+      ],
+      "2026-10-19",
+    );
+    expect(list.map((o) => [o.task.id, o.daysOverdue])).toEqual([
+      ["b", 7],
+      ["a", 1],
+    ]);
+  });
+
+  it("ignores done and deferred tasks, and always agrees with stats.overdue", () => {
+    const tasks = [
+      makeTask({ id: "a", deadline: "2026-10-10", status: "done" }),
+      makeTask({ id: "b", deadline: "2026-10-10", status: "deferred" }),
+      makeTask({ id: "c", deadline: "2026-10-10", status: "missed" }),
+      makeTask({ id: "d", deadline: "2026-10-11", status: "in_progress" }),
+    ];
+    const list = overdueTasks(tasks, "2026-10-19");
+    expect(list.map((o) => o.task.id)).toEqual(["c", "d"]);
+    expect(buildToday(data({ tasks }), NOW).stats.overdue).toBe(list.length);
   });
 });
