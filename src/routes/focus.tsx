@@ -4,9 +4,9 @@ import { Focus } from "@/components/Focus";
 export const Route = createFileRoute("/focus")({
   head: () => ({
     meta: [
-      { title: "Focus — A/L Command Center" },
+      { title: "Focus — Mission UCSC" },
       { name: "description", content: "Study timer with actual-duration tracking." },
-      { property: "og:title", content: "Focus — A/L Command Center" },
+      { property: "og:title", content: "Focus — Mission UCSC" },
       { property: "og:description", content: "Study timer with actual-duration tracking." },
     ],
   }),
