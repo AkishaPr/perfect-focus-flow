@@ -18,9 +18,9 @@ import {
 export const Route = createFileRoute("/tasks")({
   head: () => ({
     meta: [
-      { title: "Tasks — A/L Command Center" },
+      { title: "Tasks — Mission UCSC" },
       { name: "description", content: "Homework, papers, revision, chapters and recordings." },
-      { property: "og:title", content: "Tasks — A/L Command Center" },
+      { property: "og:title", content: "Tasks — Mission UCSC" },
       {
         property: "og:description",
         content: "Homework, papers, revision, chapters and recordings.",
