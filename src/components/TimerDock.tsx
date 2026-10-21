@@ -58,7 +58,7 @@ function ActiveDock({ timer }: { timer: TimerState }) {
     <Link
       to="/focus"
       aria-label={`${isBreak ? "Break" : "Focus timer"} ${clock}${isRunning(timer) ? "" : ", paused"}. Open the timer.`}
-      className="fixed bottom-20 right-4 z-30 flex items-center gap-2 rounded-full border bg-card px-4 py-2 text-sm shadow-lg md:bottom-6 md:right-6"
+      className="motion-rise fixed bottom-20 right-4 z-30 flex items-center gap-2 rounded-full border bg-card px-4 py-2 text-sm shadow-lg md:bottom-6 md:right-6"
     >
       <Icon className="h-4 w-4" aria-hidden="true" />
       <span className="font-mono tabular-nums">{clock}</span>

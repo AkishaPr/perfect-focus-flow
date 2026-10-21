@@ -16,6 +16,7 @@ import { resolveReview, usePlanLog } from "@/lib/recovery/log";
 import type { PlannerWarning } from "@/lib/planner";
 import { toMin } from "@/lib/calendar";
 import { useStore } from "@/lib/store";
+import { stagger } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { SUBJECTS, SUBJECT_LABEL, type Subject, type Task } from "@/lib/types";
 
@@ -155,7 +156,7 @@ function TimelineRow({ entry }: { entry: TimelineEntry }) {
           active && "border-signal/60",
         )}
       >
-        {done && <Check className="h-4 w-4 shrink-0" aria-hidden="true" />}
+        {done && <Check className="motion-pop h-4 w-4 shrink-0" aria-hidden="true" />}
         <span className="min-w-0 flex-1 truncate font-medium">{title}</span>
         <span
           className={cn(
@@ -230,7 +231,7 @@ function BlockRing({ active, now, today }: { active: ActiveWork; now: Date; toda
           strokeWidth="8"
           strokeLinecap="round"
           strokeDasharray={`${C * pct} ${C}`}
-          className="stroke-warning dark:stroke-signal"
+          className="motion-ring stroke-warning dark:stroke-signal"
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
@@ -257,7 +258,10 @@ function StudyBar({
       aria-valuenow={pct}
       className="mt-4 h-2.5 overflow-hidden rounded-full bg-muted"
     >
-      <div className="flex h-full gap-0.5" style={{ width: `${pct}%` }}>
+      <div
+        className="motion-grow-x flex h-full gap-0.5 transition-transform duration-500 ease-out"
+        style={{ transform: `scaleX(${pct / 100})` }}
+      >
         {parts
           .filter((p) => p.min > 0)
           .map((p) => (
@@ -282,7 +286,7 @@ function WeekRhythm({ week, today }: { week: WeekStudy; today: string }) {
           ? SIGNAL_FILL
           : "bg-foreground/80";
   return (
-    <div className={CARD}>
+    <div className={`${CARD} motion-rise`} style={stagger(3)}>
       <div className="flex items-baseline justify-between gap-2">
         <h2 className={EYEBROW}>This week</h2>
         <span className="font-mono text-xs text-muted-foreground">
@@ -295,15 +299,16 @@ function WeekRhythm({ week, today }: { week: WeekStudy; today: string }) {
         aria-label={`Study time per day. ${summary}`}
         className="mt-4 grid h-20 grid-cols-7 items-end gap-2"
       >
-        {week.days.map((d) => (
+        {week.days.map((d, i) => (
           <div key={d.date} className="flex h-full items-end">
             <span
-              className={cn("block w-full rounded-t-md", bar(d))}
-              style={
-                d.isFuture
-                  ? undefined
-                  : { height: `${Math.max(5, Math.round((d.totalMin / scale) * 100))}%` }
-              }
+              className={cn("motion-grow-y block w-full rounded-t-md", bar(d))}
+              style={{
+                ...(d.isFuture
+                  ? {}
+                  : { height: `${Math.max(5, Math.round((d.totalMin / scale) * 100))}%` }),
+                ...stagger(i),
+              }}
             />
           </div>
         ))}
@@ -420,8 +425,9 @@ export function Today({ now: nowOverride }: { now?: Date }) {
         <div className="min-w-0 space-y-7">
           {active ? (
             <section
+              key="active"
               aria-label="In progress"
-              className={`${CARD} flex flex-col-reverse gap-6 border-signal/60 p-6 shadow-glow sm:flex-row sm:items-center sm:justify-between`}
+              className={`motion-rise ${CARD} flex flex-col-reverse gap-6 border-signal/60 p-6 shadow-glow sm:flex-row sm:items-center sm:justify-between`}
             >
               <div className="min-w-0">
                 <div className={`flex items-center gap-2 ${EYEBROW} ${SIGNAL_TEXT}`}>
@@ -458,7 +464,7 @@ export function Today({ now: nowOverride }: { now?: Date }) {
               <BlockRing active={active} now={now} today={view.date} />
             </section>
           ) : next ? (
-            <section aria-label="Next task" className={`${CARD} p-6`}>
+            <section key="next" aria-label="Next task" className={`motion-rise ${CARD} p-6`}>
               <div className={EYEBROW}>Next up</div>
               <h2 className="mt-2.5 text-2xl font-semibold leading-tight">{next.task.title}</h2>
               <TaskMeta task={next.task} />
@@ -479,7 +485,11 @@ export function Today({ now: nowOverride }: { now?: Date }) {
               )}
             </section>
           ) : (
-            <section aria-label="Next task" className={`${CARD} text-sm text-muted-foreground`}>
+            <section
+              key="empty"
+              aria-label="Next task"
+              className={`motion-rise ${CARD} text-sm text-muted-foreground`}
+            >
               {openTasks === 0 ? (
                 <>
                   Nothing to plan yet.{" "}
@@ -504,7 +514,7 @@ export function Today({ now: nowOverride }: { now?: Date }) {
             </section>
           )}
 
-          <section aria-label="Today's timeline">
+          <section aria-label="Today's timeline" className="motion-rise" style={stagger(1)}>
             <div className="mb-3 flex items-baseline justify-between gap-3">
               <h2 className="text-lg font-semibold">Today's timeline</h2>
               {activeMin > 0 && (
@@ -532,7 +542,7 @@ export function Today({ now: nowOverride }: { now?: Date }) {
         </div>
 
         <aside aria-label="Today at a glance" className="space-y-4">
-          <div className={CARD}>
+          <div className={`${CARD} motion-rise`} style={stagger(1)}>
             <div className={EYEBROW}>Studied today</div>
             <div className="mt-1.5 text-4xl font-semibold leading-none">
               {minutes(stats.doneMin)}
@@ -578,7 +588,7 @@ export function Today({ now: nowOverride }: { now?: Date }) {
             </ul>
           </div>
 
-          <div className={CARD}>
+          <div className={`${CARD} motion-rise`} style={stagger(2)}>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <div className="text-3xl font-semibold leading-none">{stats.dueToday}</div>
@@ -633,7 +643,7 @@ export function Today({ now: nowOverride }: { now?: Date }) {
           <WeekRhythm week={week} today={view.date} />
 
           {view.didNotFit.length > 0 && (
-            <div className={`${CARD} text-sm`}>
+            <div className={`${CARD} motion-rise text-sm`} style={stagger(4)}>
               <div className="font-medium">
                 {view.didNotFit.length}{" "}
                 {view.didNotFit.length === 1 ? "task doesn't" : "tasks don't"} fit this week

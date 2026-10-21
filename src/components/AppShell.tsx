@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import {
   CalendarDays,
@@ -14,6 +14,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { TimerDock } from "@/components/TimerDock";
 import { hydrateTimer } from "@/lib/focus/store";
 import { hydratePlanLog } from "@/lib/recovery/log";
+import { stagger } from "@/lib/motion";
 import { getBackupRaw, hydrateStore, type RecoveryNotice } from "@/lib/store";
 
 const NAV = [
@@ -36,6 +37,7 @@ const NAV_IDLE =
 export function AppShell({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [notice, setNotice] = useState<RecoveryNotice | null>(null);
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   useEffect(() => {
     Promise.all([hydrateStore(), hydrateTimer(), hydratePlanLog()])
       // Only set when present: a second (dev StrictMode) run finds nothing left to report.
@@ -93,11 +95,17 @@ export function AppShell({ children }: { children: ReactNode }) {
           {ready ? (
             <>
               {notice && <RecoveryBanner notice={notice} onDismiss={() => setNotice(null)} />}
-              {children}
+              {/* Keyed by route so each page eases in; it never replays on data updates. */}
+              <div key={pathname} className="motion-rise">
+                {children}
+              </div>
               <TimerDock />
             </>
           ) : (
-            <div className="text-sm text-muted-foreground">Loading…</div>
+            // Saved data loads in a blink, so the text waits 200ms before showing: no flash on a fast load.
+            <div className="motion-fade text-sm text-muted-foreground" style={stagger(4)}>
+              Loading…
+            </div>
           )}
         </div>
       </main>
