@@ -184,7 +184,8 @@
  *   CONTINUITY one card becomes another (Next task -> In progress)
  *   DELIGHT    a small reward, used sparingly (the check on finished work)
  * This is a study app people keep open for hours, so everything is short (under ~0.5s), eases out,
- * only moves transform and opacity (plus the ring's dash), and plays once on arrival, never in a loop.
+ * only moves transform and opacity (plus the ring's dash), and plays once on arrival, never in a loop
+ * (the one exception is the missed-work reminder, which pulses twice and stops).
  * Users who ask their system for less motion get none (see the media query at the end).
  */
 :root {
@@ -227,6 +228,70 @@
     stroke-dasharray: 0 340;
   }
 }
+/* A check mark or a curve drawing itself: the path is measured with pathLength, so these are 0..1 of its length. */
+@keyframes motion-tick {
+  from {
+    stroke-dasharray: 0 20;
+  }
+}
+@keyframes motion-draw {
+  from {
+    stroke-dasharray: 0 1;
+  }
+}
+/* A changed clock digit settles into place. */
+@keyframes motion-digit {
+  from {
+    opacity: 0;
+    transform: translateY(14%);
+  }
+}
+/* A soft light passes over a finished bar. Explicit start and end: it leaves nothing behind. */
+@keyframes motion-sheen {
+  from {
+    transform: translateX(-120%);
+  }
+  to {
+    transform: translateX(400%);
+  }
+}
+/* A completed row warms up, then settles back. */
+@keyframes motion-flash {
+  0% {
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+/* One spark: out from the centre (--dx, --dy are set per spark), shrinking and fading. */
+@keyframes motion-spark {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.4);
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy)) scale(0.7);
+  }
+}
+/* A ring that swells and fades around something that needs a look. */
+@keyframes motion-pulse {
+  from {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.04);
+  }
+}
 
 /* `--i` is the position in a group (see `stagger` in src/lib/motion.ts); `backwards` holds the start state during the delay. */
 @utility motion-rise {
@@ -255,6 +320,29 @@
   animation: motion-ring 700ms var(--motion-ease-out) backwards;
   animation-delay: 150ms;
   transition: stroke-dasharray 600ms var(--motion-ease-out);
+}
+@utility motion-tick {
+  animation: motion-tick 260ms var(--motion-ease-out) 60ms backwards;
+}
+@utility motion-draw {
+  animation: motion-draw 900ms var(--motion-ease-out) 200ms backwards;
+}
+@utility motion-digit {
+  animation: motion-digit 180ms var(--motion-ease-out) backwards;
+}
+@utility motion-sheen {
+  animation: motion-sheen 900ms var(--motion-ease-out) both;
+}
+@utility motion-flash {
+  animation: motion-flash 1100ms ease-out both;
+}
+@utility motion-spark {
+  opacity: 0;
+  animation: motion-spark var(--spark-ms, 700ms) var(--motion-ease-out) both;
+}
+/* Twice, after a short wait, then still. */
+@utility motion-pulse {
+  animation: motion-pulse 1600ms ease-out 400ms 2 both;
 }
 
 @media (prefers-reduced-motion: reduce) {

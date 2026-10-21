@@ -5,3 +5,6 @@ import type { CSSProperties } from "react";
  * stagger step to get each element's delay, so siblings arrive one after another instead of at once.
  */
 export const stagger = (i: number) => ({ "--i": i }) as CSSProperties;
+
+/** How long a just-finished task stays in a list that hides finished work, so its reward can be seen. */
+export const LINGER_MS = 1100;
