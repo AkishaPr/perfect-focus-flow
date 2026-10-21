@@ -14,6 +14,8 @@ import { makeTask } from "./planner-fixtures";
 
 const toast = vi.hoisted(() => vi.fn());
 vi.mock("sonner", () => ({ toast }));
+const playSound = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/sound", () => ({ playSound }));
 
 const min = (n: number) => n * MS_PER_MIN;
 
@@ -40,6 +42,7 @@ beforeEach(() => {
   useTimer.setState({ timer: null });
   document.title = "Today — A/L Command Center";
   toast.mockClear();
+  playSound.mockClear();
 });
 afterEach(() => {
   cleanup();
@@ -100,6 +103,8 @@ describe("TimerDock", () => {
     expect(toast).toHaveBeenCalledWith("Focus block complete.", {
       description: "Integration homework",
     });
+    // The same moment gets a soft chime, once.
+    expect(playSound).toHaveBeenCalledExactlyOnceWith("chime");
   });
 
   it("doesn't announce a target that was already passed when the page loaded", async () => {
@@ -107,5 +112,6 @@ describe("TimerDock", () => {
     await renderDock();
     await new Promise((r) => setTimeout(r, 1300)); // let at least one tick pass
     expect(toast).not.toHaveBeenCalled();
+    expect(playSound).not.toHaveBeenCalled(); // and no chime on load either
   });
 });

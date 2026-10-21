@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Check, Coffee, Pause, Play, Square, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,8 @@ import {
 } from "@/lib/focus/timer";
 import { remainingMin, sessionDate, spentMin, studiedMinOn } from "@/lib/planner";
 import { buildToday } from "@/lib/planner/today";
+import { stagger } from "@/lib/motion";
+import { playSound } from "@/lib/sound";
 import { useStore } from "@/lib/store";
 import { SUBJECT_LABEL, type PlanBlock, type Task } from "@/lib/types";
 
@@ -28,6 +30,32 @@ const CARD = "rounded-xl border bg-card p-5 shadow-xs";
 const fmtMin = (n: number) =>
   n >= 60 ? `${Math.floor(n / 60)}h ${n % 60 ? `${n % 60}m` : ""}`.trim() : `${n} min`;
 const fmtLong = (ms: number) => fmtMin(Math.round(ms / MS_PER_MIN));
+
+/** One character of the clock. It plays its settle-in only if it appeared after the clock did. */
+function Digit({ ch, animate }: { ch: string; animate: boolean }) {
+  // Decided once, when this digit mounts: a digit that was already there never replays.
+  const [fresh] = useState(animate);
+  return <span className={fresh ? "motion-digit inline-block" : "inline-block"}>{ch}</span>;
+}
+
+/**
+ * The clock text with each changed digit settling into place. A digit is keyed by its place
+ * (counted from the right) and its value, so only the digits that actually changed are replaced:
+ * the seconds move every second, the tens of seconds every ten. Nothing animates on first paint.
+ * The text content is exactly the clock text.
+ */
+export function AnimatedClock({ text }: { text: string }) {
+  const [armed, setArmed] = useState(false);
+  useEffect(() => setArmed(true), []);
+  const chars = [...text];
+  return (
+    <>
+      {chars.map((ch, i) => (
+        <Digit key={`${chars.length - i}:${ch}`} ch={ch} animate={armed} />
+      ))}
+    </>
+  );
+}
 
 function TaskLine({ task }: { task: Task }) {
   return (
@@ -98,7 +126,7 @@ function Idle({ now }: { now: Date }) {
     return (
       <section
         aria-label="Start a focus session"
-        className={`${CARD} text-sm text-muted-foreground`}
+        className={`${CARD} motion-rise text-sm text-muted-foreground`}
       >
         Nothing to focus on yet.{" "}
         <Link to="/tasks" className="underline">
@@ -110,7 +138,7 @@ function Idle({ now }: { now: Date }) {
   }
 
   return (
-    <section aria-label="Start a focus session" className={CARD}>
+    <section aria-label="Start a focus session" className={`${CARD} motion-rise`}>
       <label
         htmlFor="focus-task"
         className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
@@ -141,7 +169,12 @@ function Idle({ now }: { now: Date }) {
           <TaskLine task={task} />
           <TaskProgress task={task} />
           <div className="mt-4">
-            <Button onClick={() => begin(task.id, now.getTime(), block)}>
+            <Button
+              onClick={() => {
+                playSound("start");
+                begin(task.id, now.getTime(), block);
+              }}
+            >
               <Play className="h-4 w-4" /> Start focus · {fmtMin(lengthMin)}
             </Button>
           </div>
@@ -211,20 +244,29 @@ function Running({ timer, now }: { timer: TimerState; now: Date }) {
 
 function Clock({ timer, nowMs }: { timer: TimerState; nowMs: number }) {
   const p = progress(timer, nowMs);
+  const running = isRunning(timer);
+  // Paused reads as a calm state change: the numbers and the bar soften, the word fades in.
+  const soft = running ? "" : "opacity-60";
   return (
     <div className="mt-5">
       <div
         role="timer"
         aria-label={p.over ? "Time over target" : "Time left"}
-        className="font-mono text-6xl font-medium tabular-nums"
+        className={`font-mono text-6xl font-medium tabular-nums transition-opacity duration-300 ${soft}`}
       >
-        {clockText(p)}
+        <AnimatedClock text={clockText(p)} />
       </div>
       <p className="mt-1 text-xs text-muted-foreground">
         {p.over ? "past the target" : "left"} · target {fmtMin(timer.targetMin)}
-        {!isRunning(timer) && " · paused"}
+        {!running && <span className="motion-fade"> · paused</span>}
       </p>
-      <Progress value={Math.round(p.fraction * 100)} aria-label="Phase progress" className="mt-4" />
+      <Progress
+        value={Math.round(p.fraction * 100)}
+        aria-label="Phase progress"
+        // The bar fills, then a soft light passes over it once when the target is reached.
+        sheen={p.over}
+        className={`mt-4 transition-opacity duration-300 ${soft}`}
+      />
     </div>
   );
 }
@@ -265,7 +307,10 @@ function FocusPhase({ timer, task, nowMs }: { timer: TimerState; task: Task; now
     finishFocus({ nowMs, minutes: suggestedMinutes(timer, nowMs), taskDone: false, then: "break" });
 
   return (
-    <section aria-label="Timer" className={`${CARD} border-signal/60`}>
+    <section
+      aria-label="Timer"
+      className={`${CARD} motion-rise transition-colors duration-300 ${running ? "border-signal/60" : ""}`}
+    >
       <div className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
         Focus{timer.segments > 0 && ` · session ${timer.segments + 1}`}
       </div>
@@ -314,7 +359,7 @@ function FocusPhase({ timer, task, nowMs }: { timer: TimerState; task: Task; now
           {p.over && !stale && keptGoing !== timer.phaseStartedAt && (
             <div
               role="status"
-              className="mt-5 rounded-lg border border-signal/60 bg-signal/15 p-4 text-sm"
+              className="motion-rise mt-5 rounded-lg border border-signal/60 bg-signal/15 p-4 text-sm"
             >
               <p className="font-medium">Focus block complete.</p>
               <div className="mt-3 flex flex-wrap gap-2">
@@ -337,7 +382,12 @@ function FocusPhase({ timer, task, nowMs }: { timer: TimerState; task: Task; now
                 <Pause className="h-4 w-4" /> Pause
               </Button>
             ) : (
-              <Button onClick={() => resumeTimer(nowMs)}>
+              <Button
+                onClick={() => {
+                  playSound("start");
+                  resumeTimer(nowMs);
+                }}
+              >
                 <Play className="h-4 w-4" /> Resume
               </Button>
             )}
@@ -359,7 +409,7 @@ function Break({ timer, task, nowMs }: { timer: TimerState; task: Task; nowMs: n
   const p = progress(timer, nowMs);
   const running = isRunning(timer);
   return (
-    <section aria-label="Timer" className={CARD}>
+    <section aria-label="Timer" className={`${CARD} motion-rise`}>
       <div className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
         <Coffee className="h-3.5 w-3.5" aria-hidden="true" /> Break
       </div>
@@ -368,7 +418,12 @@ function Break({ timer, task, nowMs }: { timer: TimerState; task: Task; nowMs: n
       </p>
       <Clock timer={timer} nowMs={nowMs} />
       <div className="mt-5 flex flex-wrap gap-2">
-        <Button onClick={() => nextFocus(nowMs)}>
+        <Button
+          onClick={() => {
+            playSound("start");
+            nextFocus(nowMs);
+          }}
+        >
           <Play className="h-4 w-4" /> {p.over ? "Start next focus" : "Skip break"}
         </Button>
         {!p.over &&
@@ -406,7 +461,7 @@ function SessionsToday({ now }: { now: Date }) {
   const titleOf = (id: string) => tasks.find((t) => t.id === id)?.title ?? "Deleted task";
 
   return (
-    <section aria-label="Today's sessions">
+    <section aria-label="Today's sessions" className="motion-rise" style={stagger(1)}>
       <div className="mb-3 flex items-baseline justify-between">
         <h2 className="text-sm font-medium text-muted-foreground">Today's sessions</h2>
         <span className="text-xs text-muted-foreground">Studied today: {fmtMin(total)}</span>

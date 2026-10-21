@@ -22,6 +22,7 @@ import {
 } from "@/lib/progress";
 import { uid, useStore } from "@/lib/store";
 import { SUBJECTS, SUBJECT_LABEL, type PaperMark } from "@/lib/types";
+import { stagger } from "@/lib/motion";
 
 const CARD = "rounded-xl border bg-card p-5 shadow-xs";
 const SECTION_TITLE = "mb-3 text-sm font-medium text-muted-foreground";
@@ -157,7 +158,7 @@ function StudyTime({
       : []),
   ];
   return (
-    <section aria-label="Study time">
+    <section aria-label="Study time" className="motion-rise">
       <h2 className={SECTION_TITLE}>Study time</h2>
       <div className="grid gap-4 lg:grid-cols-3">
         <div className={CARD}>
@@ -274,7 +275,7 @@ function Work({
     { label: "Stuck", value: attention.stuck, warn: attention.stuck > 0 },
   ];
   return (
-    <section aria-label="Completed and missed work">
+    <section aria-label="Completed and missed work" className="motion-rise" style={stagger(1)}>
       <h2 className={SECTION_TITLE}>Completed and missed work</h2>
       <div className="grid gap-4 lg:grid-cols-3">
         <div className={CARD}>
@@ -379,7 +380,7 @@ function PaperMarks({ marks, now }: { marks: PaperMark[]; now: Date }) {
   const subjectsWithMarks = bySubject.filter((s) => s.count > 0).length;
 
   return (
-    <section aria-label="Paper marks">
+    <section aria-label="Paper marks" className="motion-rise" style={stagger(2)}>
       <div className="mb-3 flex items-center justify-between gap-3">
         <h2 className="text-sm font-medium text-muted-foreground">Paper marks</h2>
         <Button size="sm" onClick={() => setEditing({ mark: newMark(now), isNew: true })}>
