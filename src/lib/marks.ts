@@ -134,6 +134,68 @@ export function chartGeometry(marks: PaperMark[]): ChartGeometry {
   };
 }
 
+export interface XY {
+  x: number;
+  y: number;
+}
+
+/**
+ * An SVG path through the points as a gentle curve (monotone cubic, Fritsch-Carlson). Unlike a
+ * generic spline it never overshoots: between two marks the line stays between their heights, and
+ * a high or low mark is a peak or valley with a flat tangent, so the curve can't suggest a score
+ * that was never got. Points must be sorted by x; two points sharing an x are joined by a straight
+ * step. The curve passes exactly through every point.
+ */
+export function smoothPath(points: XY[]): string {
+  const n = points.length;
+  if (n === 0) return "";
+  const f = (v: number) => String(Math.round(v * 100) / 100);
+  let d = `M${f(points[0]!.x)},${f(points[0]!.y)}`;
+  if (n === 1) return d;
+
+  // Slope of each segment (0 for a vertical step, which is drawn straight).
+  const dx: number[] = [];
+  const m: number[] = [];
+  for (let i = 0; i < n - 1; i++) {
+    const w = points[i + 1]!.x - points[i]!.x;
+    dx.push(w);
+    m.push(w > 0 ? (points[i + 1]!.y - points[i]!.y) / w : 0);
+  }
+  // Tangent at each point: the average of the slopes either side, or flat at a peak or valley.
+  const t = new Array<number>(n);
+  t[0] = m[0]!;
+  t[n - 1] = m[n - 2]!;
+  for (let i = 1; i < n - 1; i++) t[i] = m[i - 1]! * m[i]! <= 0 ? 0 : (m[i - 1]! + m[i]!) / 2;
+  // Keep every tangent short enough that a segment never bulges past its own endpoints.
+  for (let i = 0; i < n - 1; i++) {
+    if (m[i] === 0) {
+      t[i] = 0;
+      t[i + 1] = 0;
+      continue;
+    }
+    const a = t[i]! / m[i]!;
+    const b = t[i + 1]! / m[i]!;
+    const s = a * a + b * b;
+    if (s > 9) {
+      const k = 3 / Math.sqrt(s);
+      t[i] = k * a * m[i]!;
+      t[i + 1] = k * b * m[i]!;
+    }
+  }
+
+  for (let i = 0; i < n - 1; i++) {
+    const p0 = points[i]!;
+    const p1 = points[i + 1]!;
+    if (dx[i]! <= 0) {
+      d += `L${f(p1.x)},${f(p1.y)}`;
+      continue;
+    }
+    const h = dx[i]! / 3;
+    d += `C${f(p0.x + h)},${f(p0.y + t[i]! * h)} ${f(p1.x - h)},${f(p1.y - t[i + 1]! * h)} ${f(p1.x)},${f(p1.y)}`;
+  }
+  return d;
+}
+
 /**
  * Nudges label positions (top to bottom, in px) apart so labels that would land on the same spot
  * stay readable. Order is kept; each label moves as little as it can, within [lo, hi].

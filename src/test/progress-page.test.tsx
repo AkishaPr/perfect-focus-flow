@@ -475,7 +475,10 @@ describe("paper marks", () => {
       expect(chart).toHaveAccessibleName(/Combined Maths: 2 papers, latest 80%/);
       expect(chart).toHaveAccessibleName(/Physics: 1 paper, latest 50%/);
       expect(chart.querySelectorAll("circle")).toHaveLength(3);
-      expect(chart.querySelectorAll("polyline")).toHaveLength(1); // only maths has two points
+      const lines = chart.querySelectorAll("path[data-line]");
+      expect(lines).toHaveLength(1); // only maths has two points
+      expect(lines[0]).toHaveAttribute("data-line", "maths");
+      expect(lines[0]!.getAttribute("d")).toMatch(/^M[\d.,-]+C/); // a curve, not straight segments
     });
   });
 

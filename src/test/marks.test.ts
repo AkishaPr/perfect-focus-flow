@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { chartGeometry, markError, markPercent, marksBySubject, spreadLabels } from "@/lib/marks";
+import {
+  chartGeometry,
+  markError,
+  markPercent,
+  marksBySubject,
+  smoothPath,
+  spreadLabels,
+} from "@/lib/marks";
 import { recentAverage, subjectWeakness } from "@/lib/planner";
 import { SUBJECTS, type PaperMark, type Subject } from "@/lib/types";
 import { makeMark } from "./planner-fixtures";
@@ -258,5 +265,86 @@ describe("spreadLabels", () => {
   it("handles no labels and one label", () => {
     expect(spreadLabels([], 14, 0, 100)).toEqual([]);
     expect(spreadLabels([30], 14, 0, 100)).toEqual([30]);
+  });
+});
+
+describe("smoothPath", () => {
+  const nums = (d: string) => d.match(/-?\d+(?:\.\d+)?/g)!.map(Number);
+
+  it("handles no points and one point", () => {
+    expect(smoothPath([])).toBe("");
+    expect(smoothPath([{ x: 5, y: 7 }])).toBe("M5,7");
+  });
+
+  it("joins two points with a line (a curve through two points has nothing to bend around)", () => {
+    expect(
+      smoothPath([
+        { x: 0, y: 0 },
+        { x: 10, y: 20 },
+      ]),
+    ).toBe("M0,0C3.33,6.67 6.67,13.33 10,20");
+  });
+
+  it("passes exactly through every point", () => {
+    const pts = [
+      { x: 0, y: 50 },
+      { x: 40, y: 20 },
+      { x: 90, y: 70 },
+      { x: 120, y: 30 },
+    ];
+    const n = nums(smoothPath(pts));
+    // M x y, then each segment ends with its own point (the last two numbers of its 6)
+    expect(n.slice(0, 2)).toEqual([0, 50]);
+    pts
+      .slice(1)
+      .forEach((p, i) => expect(n.slice(2 + i * 6 + 4, 2 + i * 6 + 6)).toEqual([p.x, p.y]));
+  });
+
+  it("flattens at a peak or valley instead of swinging past it", () => {
+    const n = nums(
+      smoothPath([
+        { x: 0, y: 10 },
+        { x: 10, y: 50 },
+        { x: 20, y: 10 },
+      ]),
+    );
+    // M x y, then each segment is C c1x c1y c2x c2y x y: segment 1's c2y is n[5], segment 2's c1y is n[9]
+    expect(n[5]).toBe(50);
+    expect(n[9]).toBe(50);
+  });
+
+  it("never overshoots: between two points the curve stays between their heights", () => {
+    const rand = rng(7);
+    for (let run = 0; run < 200; run++) {
+      const count = 2 + Math.floor(rand() * 7);
+      let x = 0;
+      const pts = Array.from({ length: count }, () => ({
+        x: (x += 1 + Math.floor(rand() * 30)),
+        y: Math.round(rand() * 100),
+      }));
+      const n = nums(smoothPath(pts));
+      for (let i = 0; i < count - 1; i++) {
+        const [c1x, c1y, c2x, c2y] = n.slice(2 + i * 6, 2 + i * 6 + 4);
+        const lo = Math.min(pts[i]!.y, pts[i + 1]!.y) - 0.02;
+        const hi = Math.max(pts[i]!.y, pts[i + 1]!.y) + 0.02;
+        expect(c1y).toBeGreaterThanOrEqual(lo);
+        expect(c1y).toBeLessThanOrEqual(hi);
+        expect(c2y).toBeGreaterThanOrEqual(lo);
+        expect(c2y).toBeLessThanOrEqual(hi);
+        expect(c1x).toBeGreaterThan(pts[i]!.x);
+        expect(c2x).toBeLessThan(pts[i + 1]!.x);
+      }
+    }
+  });
+
+  it("joins two marks on the same date with a straight step, never NaN", () => {
+    const d = smoothPath([
+      { x: 0, y: 10 },
+      { x: 5, y: 30 },
+      { x: 5, y: 50 },
+      { x: 10, y: 40 },
+    ]);
+    expect(d).not.toMatch(/NaN|Infinity/);
+    expect(d).toContain("L5,50");
   });
 });
