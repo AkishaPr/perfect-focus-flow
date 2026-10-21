@@ -1,7 +1,7 @@
 import { Check } from "lucide-react";
 import { SUBJECT_BG } from "@/components/subject-colors";
 import { formatMinutes, formatPercent } from "@/lib/format";
-import { chartGeometry, spreadLabels } from "@/lib/marks";
+import { chartGeometry, smoothPath, spreadLabels } from "@/lib/marks";
 import { ymd } from "@/lib/calendar";
 import type { WeekStudy, WeekTotal } from "@/lib/progress";
 import { SUBJECTS, SUBJECT_LABEL, type PaperMark, type Subject } from "@/lib/types";
@@ -314,14 +314,15 @@ export function MarksChart({ marks }: { marks: PaperMark[] }) {
       {SUBJECTS.map((s) => {
         const mine = points.filter((p) => p.subject === s);
         return mine.length >= 2 ? (
-          <polyline
+          <path
             key={s}
+            data-line={s}
             fill="none"
             strokeWidth={2.5}
             strokeLinejoin="round"
             strokeLinecap="round"
             className={SUBJECT_STROKE[s]}
-            points={mine.map((p) => `${x(p.x)},${y(p.y)}`).join(" ")}
+            d={smoothPath(mine.map((p) => ({ x: x(p.x), y: y(p.y) })))}
           />
         ) : null;
       })}
