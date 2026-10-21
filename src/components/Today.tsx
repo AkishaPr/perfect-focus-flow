@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { AlertTriangle, Check, Play, Plus, Timer, Undo2 } from "lucide-react";
 import { PageHeader } from "@/components/AppShell";
+import { ProgressRing } from "@/components/ProgressRing";
 import { StarRating } from "@/components/StarRating";
 import { Recovery } from "@/components/Recovery";
 import { blankTask, TaskDialog } from "@/components/TaskDialog";
@@ -543,9 +544,24 @@ export function Today({ now: nowOverride }: { now?: Date }) {
 
         <aside aria-label="Today at a glance" className="space-y-4">
           <div className={`${CARD} motion-rise`} style={stagger(1)}>
-            <div className={EYEBROW}>Studied today</div>
-            <div className="mt-1.5 text-4xl font-semibold leading-none">
-              {minutes(stats.doneMin)}
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className={EYEBROW}>Studied today</div>
+                <div className="mt-1.5 text-4xl font-semibold leading-none">
+                  {minutes(stats.doneMin)}
+                </div>
+              </div>
+              {/* Fills as the day's work gets done and turns green when the goal is met. The
+                  percentage is written out below, so the ring itself stays out of the way. */}
+              <ProgressRing
+                pct={goalPct / 100}
+                className="h-14 w-14"
+                barClassName={
+                  goalPct >= 100 ? "stroke-success" : "stroke-warning dark:stroke-signal"
+                }
+              >
+                {goalPct >= 100 && <Check className="motion-pop h-5 w-5 text-success" />}
+              </ProgressRing>
             </div>
             <StudyBar
               pct={goalPct}

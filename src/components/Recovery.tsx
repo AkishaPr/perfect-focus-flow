@@ -93,7 +93,13 @@ export function Recovery({
   const easy = items.filter((i) => !i.stuck);
   const stuckCount = items.length - easy.length;
   return (
-    <section aria-label="Missed work" className="mb-6 rounded-xl border bg-card shadow-xs">
+    <section aria-label="Missed work" className="relative mb-6 rounded-xl border bg-card shadow-xs">
+      {/* A soft ring swells and fades around the card, twice, when it appears: a nudge, not an alarm. */}
+      <span
+        aria-hidden="true"
+        data-pulse=""
+        className="motion-pulse pointer-events-none absolute -inset-px rounded-xl border-2 border-warning"
+      />
       <div className="flex flex-wrap items-start justify-between gap-3 border-b px-4 py-4">
         <div>
           <h2 className="font-medium">

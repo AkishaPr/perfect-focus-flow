@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { useNow } from "@/hooks/use-now";
 import { useTimer } from "@/lib/focus/store";
 import { clockText, isRunning, progress, type TimerState } from "@/lib/focus/timer";
+import { playSound } from "@/lib/sound";
 import { useStore } from "@/lib/store";
 
 /**
@@ -46,6 +47,7 @@ function ActiveDock({ timer }: { timer: TimerState }) {
     const prev = seen.current;
     seen.current = { key, over: p.over };
     if (prev && prev.key === key && !prev.over && p.over) {
+      playSound("chime");
       toast(isBreak ? "Break's over. Ready for the next focus?" : "Focus block complete.", {
         description: task?.title,
       });

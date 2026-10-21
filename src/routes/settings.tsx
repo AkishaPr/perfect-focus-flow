@@ -7,6 +7,8 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { setSoundEnabled, useSoundEnabled } from "@/lib/sound";
 import { exportData, migrateWithReport, useStore, defaultSettings } from "@/lib/store";
 import { InvalidBackupError, describeReport } from "@/lib/schema";
 import {
@@ -69,6 +71,7 @@ function SettingsPage() {
   const update = useStore((s) => s.updateSettings);
   const replaceAll = useStore((s) => s.replaceAll);
   const fileRef = useRef<HTMLInputElement>(null);
+  const soundOn = useSoundEnabled();
   const [pending, setPending] = useState<StoreData | null>(null);
   const [pendingNotes, setPendingNotes] = useState<string[]>([]);
   const [weak, setWeak] = useState<{ subject: Subject; topic: string }>({
@@ -119,6 +122,18 @@ function SettingsPage() {
           </p>
           <div className="max-w-xs">
             <ThemeToggle />
+          </div>
+          <div className="mt-5 flex items-start justify-between gap-4 border-t pt-4">
+            <div>
+              <Label htmlFor="sound-switch" className="text-sm font-medium">
+                Sounds
+              </Label>
+              <p className="mt-1 text-xs text-muted-foreground">
+                A soft click when focus starts, a chime when a block ends and a short phrase when
+                you reach a goal. Remembered in this browser only.
+              </p>
+            </div>
+            <Switch id="sound-switch" checked={soundOn} onCheckedChange={setSoundEnabled} />
           </div>
         </Section>
 

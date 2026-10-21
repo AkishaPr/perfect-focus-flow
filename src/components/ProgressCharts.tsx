@@ -4,6 +4,7 @@ import { formatMinutes, formatPercent } from "@/lib/format";
 import { chartGeometry, smoothPath, spreadLabels } from "@/lib/marks";
 import { ymd } from "@/lib/calendar";
 import type { WeekStudy, WeekTotal } from "@/lib/progress";
+import { stagger } from "@/lib/motion";
 import { SUBJECTS, SUBJECT_LABEL, type PaperMark, type Subject } from "@/lib/types";
 
 /**
@@ -88,7 +89,7 @@ export function DailyBars({ week }: { week: WeekStudy }) {
       style={{ paddingTop: `${PLOT_TOP_REM}rem` }}
     >
       {week.dailyGoalMin > 0 && <GoalLine min={week.dailyGoalMin} scale={scale} />}
-      {week.days.map((d) => {
+      {week.days.map((d, i) => {
         const long = local(d.date).toLocaleDateString(undefined, {
           weekday: "long",
           day: "numeric",
@@ -124,8 +125,12 @@ export function DailyBars({ week }: { week: WeekStudy }) {
             >
               {d.totalMin > 0 && (
                 <div
-                  className="flex w-full max-w-10 flex-col-reverse gap-0.5 overflow-hidden rounded-t-md"
-                  style={{ height: `${(d.totalMin / scale) * 100}%`, minHeight: 3 }}
+                  className="motion-grow-y flex w-full max-w-10 flex-col-reverse gap-0.5 overflow-hidden rounded-t-md"
+                  style={{
+                    height: `${(d.totalMin / scale) * 100}%`,
+                    minHeight: 3,
+                    ...stagger(i),
+                  }}
                 >
                   {parts.map((p) => (
                     <div
@@ -177,7 +182,7 @@ export function WeeklyTrend({
       style={{ paddingTop: `${PLOT_TOP_REM}rem` }}
     >
       {goalMin > 0 && <GoalLine min={goalMin} scale={scale} />}
-      {totals.map((t) => {
+      {totals.map((t, i) => {
         const label = local(t.weekStart).toLocaleDateString(undefined, {
           day: "numeric",
           month: "long",
@@ -198,8 +203,8 @@ export function WeeklyTrend({
             >
               {t.totalMin > 0 && (
                 <div
-                  className={`w-full max-w-12 rounded-t-md ${isSelected ? "bg-signal" : "bg-foreground/25"}`}
-                  style={{ height: `${(t.totalMin / scale) * 100}%`, minHeight: 3 }}
+                  className={`motion-grow-y w-full max-w-12 rounded-t-md ${isSelected ? "bg-signal" : "bg-foreground/25"}`}
+                  style={{ height: `${(t.totalMin / scale) * 100}%`, minHeight: 3, ...stagger(i) }}
                 />
               )}
             </div>
@@ -321,7 +326,10 @@ export function MarksChart({ marks }: { marks: PaperMark[] }) {
             strokeWidth={2.5}
             strokeLinejoin="round"
             strokeLinecap="round"
-            className={SUBJECT_STROKE[s]}
+            // The curve draws itself in once, left to right (pathLength 1 = the whole line).
+            pathLength={1}
+            strokeDasharray="1 1"
+            className={`${SUBJECT_STROKE[s]} motion-draw`}
             d={smoothPath(mine.map((p) => ({ x: x(p.x), y: y(p.y) })))}
           />
         ) : null;

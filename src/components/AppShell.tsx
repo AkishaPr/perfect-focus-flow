@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import {
   CalendarDays,
   CheckSquare,
@@ -9,12 +9,14 @@ import {
   Target,
   Timer,
 } from "lucide-react";
+import { Celebrations } from "@/components/Celebrations";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { TimerDock } from "@/components/TimerDock";
 import { hydrateTimer } from "@/lib/focus/store";
 import { hydratePlanLog } from "@/lib/recovery/log";
 import { stagger } from "@/lib/motion";
+import { armSound } from "@/lib/sound";
 import { getBackupRaw, hydrateStore, type RecoveryNotice } from "@/lib/store";
 
 const NAV = [
@@ -28,16 +30,62 @@ const NAV = [
 const SETTINGS_ITEM = { to: "/settings", label: "Settings", icon: Settings } as const;
 const MOBILE_NAV = [...NAV, SETTINGS_ITEM] as const;
 
-const NAV_LINK = "flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm transition-colors";
-const NAV_ACTIVE =
-  "bg-sidebar-primary font-medium text-sidebar-primary-foreground dark:bg-sidebar-accent dark:text-sidebar-accent-foreground";
+// `relative z-10` keeps the label above the sliding highlight behind it.
+const NAV_LINK =
+  "relative z-10 flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm transition-[color,background-color,scale] duration-200 active:scale-[0.98] motion-reduce:active:scale-100";
+const NAV_ACTIVE_TEXT =
+  "font-medium text-sidebar-primary-foreground dark:text-sidebar-accent-foreground";
+// Until the highlight has been measured (the first paint), the link paints its own background so
+// the current page is never unmarked; the slider then takes over in the very same colour.
+const NAV_ACTIVE_FALLBACK = "bg-sidebar-primary dark:bg-sidebar-accent";
 const NAV_IDLE =
   "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground";
+
+/**
+ * The highlight behind the current page's link. It slides from link to link instead of
+ * disappearing in one place and appearing in another. It follows the link's measured position, so
+ * it needs no knowledge of how tall the links are, and only `transform` is animated.
+ */
+function useNavHighlight(pathname: string, enabled: boolean) {
+  const asideRef = useRef<HTMLElement>(null);
+  const [box, setBox] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
+  // Off for the first placement (it should appear in place, not fly in from the corner).
+  const [glide, setGlide] = useState(false);
+
+  useLayoutEffect(() => {
+    const aside = asideRef.current;
+    if (!aside || !enabled) return;
+    const place = () => {
+      const link = aside.querySelector<HTMLElement>('a[data-status="active"]');
+      if (!link) return setBox(null);
+      const a = aside.getBoundingClientRect();
+      const l = link.getBoundingClientRect();
+      if (l.width === 0 && l.height === 0) return; // hidden (the sidebar is desktop-only)
+      setBox({ x: l.left - a.left, y: l.top - a.top, w: l.width, h: l.height });
+    };
+    place();
+    window.addEventListener("resize", place);
+    return () => window.removeEventListener("resize", place);
+  }, [pathname, enabled]);
+
+  useEffect(() => {
+    if (!box || glide) return;
+    const id = requestAnimationFrame(() => setGlide(true));
+    return () => cancelAnimationFrame(id);
+  }, [box, glide]);
+
+  return { asideRef, box, glide };
+}
 
 export function AppShell({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [notice, setNotice] = useState<RecoveryNotice | null>(null);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { asideRef, box, glide } = useNavHighlight(pathname, ready);
+  const placed = box !== null;
+  const active = `${NAV_ACTIVE_TEXT} ${placed ? "" : NAV_ACTIVE_FALLBACK}`;
+  // Sounds are only allowed once the person has touched the page; get ready for the first touch.
+  useEffect(() => armSound(), []);
   useEffect(() => {
     Promise.all([hydrateStore(), hydrateTimer(), hydratePlanLog()])
       // Only set when present: a second (dev StrictMode) run finds nothing left to report.
@@ -48,7 +96,18 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen md:flex">
-      <aside className="hidden w-60 shrink-0 flex-col border-r bg-sidebar p-4 md:sticky md:top-0 md:flex md:h-screen">
+      <aside
+        ref={asideRef}
+        className="hidden w-60 shrink-0 flex-col border-r bg-sidebar p-4 md:sticky md:top-0 md:flex md:h-screen"
+      >
+        {box && (
+          <span
+            aria-hidden="true"
+            data-nav-highlight=""
+            className={`pointer-events-none absolute left-0 top-0 z-0 rounded-[10px] bg-sidebar-primary dark:bg-sidebar-accent ${glide ? "transition-transform duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]" : ""}`}
+            style={{ width: box.w, height: box.h, transform: `translate(${box.x}px, ${box.y}px)` }}
+          />
+        )}
         <div className="flex items-center gap-3 px-2 pb-6 pt-2">
           <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-sidebar-primary font-display text-[13px] font-semibold text-sidebar-primary-foreground">
             A/L
@@ -65,7 +124,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               to={to}
               activeOptions={{ exact: to === "/" }}
               className={NAV_LINK}
-              activeProps={{ className: NAV_ACTIVE }}
+              activeProps={{ className: active }}
               inactiveProps={{ className: NAV_IDLE }}
             >
               <Icon className="h-4 w-4" aria-hidden="true" />
@@ -77,7 +136,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <Link
             to={SETTINGS_ITEM.to}
             className={NAV_LINK}
-            activeProps={{ className: NAV_ACTIVE }}
+            activeProps={{ className: active }}
             inactiveProps={{ className: NAV_IDLE }}
           >
             <Settings className="h-4 w-4" aria-hidden="true" />
@@ -100,6 +159,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 {children}
               </div>
               <TimerDock />
+              <Celebrations />
             </>
           ) : (
             // Saved data loads in a blink, so the text waits 200ms before showing: no flash on a fast load.
@@ -119,7 +179,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             key={to}
             to={to}
             activeOptions={{ exact: to === "/" }}
-            className="flex flex-col items-center gap-1 py-2 text-[10px] text-muted-foreground data-[status=active]:font-semibold data-[status=active]:text-sidebar-primary"
+            className="flex flex-col items-center gap-1 py-2 text-[10px] text-muted-foreground transition-[color,scale] duration-200 active:scale-95 motion-reduce:active:scale-100 data-[status=active]:font-semibold data-[status=active]:text-sidebar-primary"
           >
             <Icon className="h-5 w-5" aria-hidden="true" />
             {label}

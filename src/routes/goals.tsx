@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { uid, useStore } from "@/lib/store";
 import { addDays, weekStart, ymd } from "@/lib/calendar";
 import { goalProgress } from "@/lib/goals";
+import { stagger } from "@/lib/motion";
 import { TASK_TYPES, type Goal, type TaskType } from "@/lib/types";
 
 export const Route = createFileRoute("/goals")({
@@ -119,7 +120,7 @@ function GoalsPage() {
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
-          {mine.map((g) => {
+          {mine.map((g, i) => {
             const p = goalProgress(g, tasks);
             if (editing?.id === g.id) {
               const bad = !editing.title.trim() || editing.target < 1;
@@ -175,7 +176,11 @@ function GoalsPage() {
               );
             }
             return (
-              <div key={g.id} className="rounded-lg border bg-card p-5">
+              <div
+                key={g.id}
+                className="motion-rise rounded-lg border bg-card p-5"
+                style={stagger(Math.min(i, 6))}
+              >
                 <div className="mb-1 flex items-start justify-between gap-2">
                   <div>
                     <div className="font-medium">{g.title}</div>
