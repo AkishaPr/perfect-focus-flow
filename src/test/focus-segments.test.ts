@@ -96,7 +96,7 @@ describe("recordFocusSegment", () => {
     expect(out.blocks[0]).toMatchObject({ start: "16:00", end: "16:01" });
   });
 
-  it("cuts a segment that runs past midnight at 23:59", () => {
+  it("keeps a segment that runs past midnight on the same study day", () => {
     const out = recordFocusSegment(
       slice(),
       seg({
@@ -105,8 +105,21 @@ describe("recordFocusSegment", () => {
         minutes: 50,
       }),
     );
-    expect(out.blocks[0]).toMatchObject({ date: "2026-10-19", start: "23:30", end: "23:59" });
+    expect(out.blocks[0]).toMatchObject({ date: "2026-10-19", start: "23:30", end: "00:20" });
     expect(out.sessions[0]?.actualMin).toBe(50);
+  });
+
+  it("cuts a segment at 02:59, the last minute of the study day", () => {
+    const out = recordFocusSegment(
+      slice(),
+      seg({
+        startedAtMs: at(20, 2, 30).getTime(),
+        endedAtMs: at(20, 3, 40).getTime(),
+        minutes: 70,
+      }),
+    );
+    expect(out.blocks[0]).toMatchObject({ date: "2026-10-19", start: "02:30", end: "02:59" });
+    expect(out.sessions[0]?.actualMin).toBe(70);
   });
 
   it("makes an untouched task 'in progress' once time is logged on it", () => {

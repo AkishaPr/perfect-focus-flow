@@ -1,4 +1,4 @@
-import { fromMin, studyDayKey, toMin, ymd } from "../calendar";
+import { STUDY_DAY_END_MIN, fromMin, studyDayKey, studyMinute } from "../calendar";
 import type { PlanBlock, Session, Task } from "../types";
 
 /**
@@ -22,21 +22,28 @@ export interface SegmentInput {
   taskDone: boolean;
 }
 
-const hhmm = (d: Date) => fromMin(d.getHours() * 60 + d.getMinutes());
-const LAST_MINUTE = 23 * 60 + 59;
+/** The last minute of a study day: 02:59 the next morning, as minutes into the day. */
+const LAST_MINUTE = 24 * 60 + STUDY_DAY_END_MIN - 1;
 
-/** The clock span of the segment on its start day. A span crossing midnight is cut at 23:59. */
+/**
+ * The clock span of the segment on its study day. Working past midnight stays on the same day
+ * (23:50 to 00:20 is one span); a span running past the end of the study day is cut at 02:59.
+ */
 function spanOf(startedAtMs: number, endedAtMs: number, minutes: number) {
   const start = new Date(startedAtMs);
   const end = new Date(Math.max(startedAtMs, endedAtMs));
-  const startMin = toMin(hhmm(start));
-  const sameDay = ymd(end) === ymd(start);
+  const startMin = studyMinute(start);
+  const sameDay = studyDayKey(end) === studyDayKey(start);
   const endMin = Math.min(
     LAST_MINUTE,
     // Never shorter than the minutes studied, whatever rounding did to the clock times.
-    Math.max(sameDay ? toMin(hhmm(end)) : LAST_MINUTE, startMin + minutes),
+    Math.max(sameDay ? studyMinute(end) : LAST_MINUTE, startMin + minutes),
   );
-  return { date: studyDayKey(start), start: fromMin(startMin), end: fromMin(endMin) };
+  return {
+    date: studyDayKey(start),
+    start: fromMin(startMin % 1440),
+    end: fromMin(endMin % 1440),
+  };
 }
 
 /**

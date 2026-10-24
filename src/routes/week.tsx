@@ -10,10 +10,14 @@ import { useStore } from "@/lib/store";
 import {
   addDays,
   blocksOn,
+  dayMin,
   eventsOn,
   fromMin,
   layoutOverlaps,
   overlappingIds,
+  studyDayKey,
+  studyDayStart,
+  studyMinute,
   toMin,
   weekStart,
   windowsOn,
@@ -37,7 +41,8 @@ export const Route = createFileRoute("/week")({
 });
 
 const START = 5 * 60;
-const END = 23 * 60;
+// The grid runs to 03:00 the next morning (27:00), where the study day ends.
+const END = 27 * 60;
 const PX = 1; // px per minute
 const GUTTER = 48; // px, the time labels
 /** Below this height (px) an event only has room for its title. */
@@ -59,15 +64,15 @@ function WeekPage() {
   const tasks = useStore((s) => s.tasks);
   const windows = useStore((s) => s.settings.studyWindows);
   const now = useNow();
-  const [anchor, setAnchor] = useState(() => weekStart(new Date()));
+  const [anchor, setAnchor] = useState(() => weekStart(studyDayStart(new Date())));
   const [editing, setEditing] = useState<CalEvent | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const days = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(anchor, i)), [anchor]);
-  const today = ymd(now);
-  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const today = studyDayKey(now);
+  const nowMin = studyMinute(now);
   const clamp = (m: number) => Math.min(END, Math.max(START, m));
-  const top = (t: string) => (clamp(toMin(t)) - START) * PX;
-  const height = (s: string, e: string) => Math.max(14, (clamp(toMin(e)) - clamp(toMin(s))) * PX);
+  const top = (t: string) => (clamp(dayMin(t)) - START) * PX;
+  const height = (s: string, e: string) => Math.max(14, (clamp(dayMin(e)) - clamp(dayMin(s))) * PX);
   const dayHeight = (END - START) * PX;
 
   // Open the grid near what matters: an hour or so before now, or a normal morning for other weeks.
@@ -95,7 +100,10 @@ function WeekPage() {
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <Button variant="secondary" onClick={() => setAnchor(weekStart(new Date()))}>
+            <Button
+              variant="secondary"
+              onClick={() => setAnchor(weekStart(studyDayStart(new Date())))}
+            >
               This week
             </Button>
             <Button
@@ -184,7 +192,7 @@ function WeekPage() {
                   className="absolute right-1.5 -translate-y-1/2 font-mono text-[10px] text-muted-foreground"
                   style={{ top: i * 60 * PX }}
                 >
-                  {fromMin(START + i * 60)}
+                  {fromMin((START + i * 60) % 1440)}
                 </div>
               ),
             )}

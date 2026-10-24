@@ -130,4 +130,11 @@ describe("week timetable", () => {
       within(screen.getByRole("button", { name: /Mock paper/ })).getByText("Exam"),
     ).toBeInTheDocument();
   });
+
+  it("runs the time grid past midnight to 03:00, where the study day ends", async () => {
+    await renderWeek();
+    for (const label of ["23:00", "00:00", "01:00", "02:00"]) {
+      expect(screen.getByText(label)).toBeInTheDocument();
+    }
+  });
 });

@@ -15,7 +15,7 @@ import { buildToday, overdueTasks, type ActiveWork, type TimelineEntry } from "@
 import { studyForWeek, type DayStudy, type WeekStudy } from "@/lib/progress";
 import { resolveReview, usePlanLog } from "@/lib/recovery/log";
 import type { PlannerWarning } from "@/lib/planner";
-import { toMin } from "@/lib/calendar";
+import { dayMin, studyDayStart, studyMinute } from "@/lib/calendar";
 import { useStore } from "@/lib/store";
 import { stagger } from "@/lib/motion";
 import { cn } from "@/lib/utils";
@@ -206,9 +206,9 @@ function Reasons({ reasons, importance }: { reasons: string[]; importance: numbe
 function BlockRing({ active, now, today }: { active: ActiveWork; now: Date; today: string }) {
   const R = 54;
   const C = 2 * Math.PI * R;
-  const start = toMin(active.block.start);
-  const end = toMin(active.block.end);
-  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const start = dayMin(active.block.start);
+  const end = dayMin(active.block.end);
+  const nowMin = studyMinute(now);
   const span = Math.max(1, end - start);
   const earlierDay = active.block.date < today;
   const pct = earlierDay ? 1 : Math.min(1, Math.max(0, (nowMin - start) / span));
@@ -386,7 +386,7 @@ export function Today({ now: nowOverride }: { now?: Date }) {
   const openTasks = tasks.filter((t) => t.status !== "done").length;
 
   // A "now" line goes where the clock is, unless a block is in progress (it carries the marker).
-  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const nowMin = studyMinute(now);
   const activeEntry = timeline.find(
     (e): e is Extract<TimelineEntry, { kind: "block" }> =>
       e.kind === "block" && e.state === "active",
@@ -394,17 +394,17 @@ export function Today({ now: nowOverride }: { now?: Date }) {
   const markerAt = activeEntry
     ? -1
     : (() => {
-        const i = timeline.findIndex((e) => toMin(e.start) >= nowMin);
+        const i = timeline.findIndex((e) => dayMin(e.start) >= nowMin);
         return i === -1 ? timeline.length : i;
       })();
   const activeReasons = activeEntry?.reasons ?? [];
-  const activeMin = active ? toMin(active.block.end) - toMin(active.block.start) : 0;
+  const activeMin = active ? dayMin(active.block.end) - dayMin(active.block.start) : 0;
 
   return (
     <>
       <PageHeader
         title="Today"
-        subtitle={`${now.toLocaleDateString(undefined, {
+        subtitle={`${studyDayStart(now).toLocaleDateString(undefined, {
           weekday: "long",
           day: "numeric",
           month: "long",
@@ -471,7 +471,7 @@ export function Today({ now: nowOverride }: { now?: Date }) {
               <TaskMeta task={next.task} />
               <p className="mt-3 text-sm">
                 {next.isToday
-                  ? `${next.startsInMin ? `Starts ${next.block.start}` : "Now"} · ${next.block.start}–${next.block.end} · ${minutes(toMin(next.block.end) - toMin(next.block.start))}`
+                  ? `${next.startsInMin ? `Starts ${next.block.start}` : "Now"} · ${next.block.start}–${next.block.end} · ${minutes(dayMin(next.block.end) - dayMin(next.block.start))}`
                   : `Nothing more today. Next study block: ${next.block.date} at ${next.block.start}.`}
               </p>
               <div className="mt-3">

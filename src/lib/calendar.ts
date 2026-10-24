@@ -10,12 +10,35 @@ export const fromMin = (m: number) =>
 export const ymd = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
-/** Personal study day: dates before 02:30 belong to the previous study day. */
+/**
+ * The study day ends at 03:00, not midnight: the time before then still belongs to the day before.
+ * Everything that asks "what day is it?" or "what time is it?" for study purposes goes through the
+ * four helpers below, so the app never rolls over to a new day while you are still working.
+ */
+export const STUDY_DAY_END_MIN = 3 * 60;
+const DAY_MIN = 24 * 60;
+
+/** The study day a moment belongs to, as "yyyy-MM-dd". */
 export function studyDayKey(d: Date): string {
   const day = new Date(d);
-  if (day.getHours() * 60 + day.getMinutes() < 150) day.setDate(day.getDate() - 1);
+  if (day.getHours() * 60 + day.getMinutes() < STUDY_DAY_END_MIN) day.setDate(day.getDate() - 1);
   return ymd(day);
 }
+
+/** Local midnight at the start of the study day a moment belongs to. */
+export const studyDayStart = (d: Date): Date => new Date(`${studyDayKey(d)}T00:00:00`);
+
+/** Minutes into the study day: 00:00-02:59 counts as 24:00-26:59, so it comes after the evening. */
+export const studyMinute = (d: Date): number => {
+  const m = d.getHours() * 60 + d.getMinutes();
+  return m < STUDY_DAY_END_MIN ? m + DAY_MIN : m;
+};
+
+/** A stored "HH:MM" as a position in the study day (late-night times sort after the evening). */
+export const dayMin = (t: string): number => {
+  const m = toMin(t);
+  return m < STUDY_DAY_END_MIN ? m + DAY_MIN : m;
+};
 
 /** Monday of the week containing d. */
 export function weekStart(d: Date) {

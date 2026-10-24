@@ -1,4 +1,4 @@
-import { addDays } from "../calendar";
+import { addDays, studyDayStart } from "../calendar";
 import { goalProgress } from "../goals";
 import type { Goal, PaperMark, Session, Settings, Subject, Task } from "../types";
 import { clamp01, daysBetween, parseYmd, startOfDay, ymd } from "./dates";
@@ -78,7 +78,7 @@ export function buildScoringContext(args: {
   goals: Goal[];
   marks: PaperMark[];
 }): ScoringContext {
-  const today = startOfDay(args.now);
+  const today = studyDayStart(args.now);
   const todayStr = ymd(today);
   const goalNeed = new Map<string, number>();
   for (const g of args.goals) {

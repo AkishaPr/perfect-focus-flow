@@ -8,7 +8,7 @@ import { SUBJECT_BG } from "@/components/subject-colors";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useNow } from "@/hooks/use-now";
-import { addDays, weekStart, ymd } from "@/lib/calendar";
+import { addDays, studyDayKey, studyDayStart, weekStart } from "@/lib/calendar";
 import { formatMinutes, formatPercent, formatPoints } from "@/lib/format";
 import { markPercent, marksBySubject, newestFirst, type SubjectMarks } from "@/lib/marks";
 import { RECENT_PAPERS } from "@/lib/planner";
@@ -33,7 +33,7 @@ const newMark = (today: Date): PaperMark => ({
   id: uid(),
   subject: "maths",
   paperName: "",
-  date: ymd(today),
+  date: studyDayKey(today),
   score: 0,
   max: 100,
 });
@@ -53,7 +53,7 @@ export function ProgressDashboard({ now: nowOverride }: { now?: Date }) {
   const marks = useStore((s) => s.marks);
 
   const [weeksBack, setWeeksBack] = useState(0);
-  const thisMonday = weekStart(now);
+  const thisMonday = weekStart(studyDayStart(now));
   const anchor = addDays(thisMonday, -7 * weeksBack);
 
   const week = useMemo(
