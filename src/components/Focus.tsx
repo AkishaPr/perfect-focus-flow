@@ -1,13 +1,15 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Check, Coffee, Pause, Play, Square, Trash2 } from "lucide-react";
+import { AnimatedClock } from "@/components/AnimatedClock";
 import { PageHeader } from "@/components/AppShell";
+import { PopoutButton } from "@/components/TimerPopout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { useNow } from "@/hooks/use-now";
 import { toMin, ymd } from "@/lib/calendar";
-import { useTimer } from "@/lib/focus/store";
+import { breakFrom, useTimer } from "@/lib/focus/store";
 import {
   MS_PER_MIN,
   clockText,
@@ -30,32 +32,6 @@ const CARD = "rounded-xl border bg-card p-5 shadow-xs";
 const fmtMin = (n: number) =>
   n >= 60 ? `${Math.floor(n / 60)}h ${n % 60 ? `${n % 60}m` : ""}`.trim() : `${n} min`;
 const fmtLong = (ms: number) => fmtMin(Math.round(ms / MS_PER_MIN));
-
-/** One character of the clock. It plays its settle-in only if it appeared after the clock did. */
-function Digit({ ch, animate }: { ch: string; animate: boolean }) {
-  // Decided once, when this digit mounts: a digit that was already there never replays.
-  const [fresh] = useState(animate);
-  return <span className={fresh ? "motion-digit inline-block" : "inline-block"}>{ch}</span>;
-}
-
-/**
- * The clock text with each changed digit settling into place. A digit is keyed by its place
- * (counted from the right) and its value, so only the digits that actually changed are replaced:
- * the seconds move every second, the tens of seconds every ten. Nothing animates on first paint.
- * The text content is exactly the clock text.
- */
-export function AnimatedClock({ text }: { text: string }) {
-  const [armed, setArmed] = useState(false);
-  useEffect(() => setArmed(true), []);
-  const chars = [...text];
-  return (
-    <>
-      {chars.map((ch, i) => (
-        <Digit key={`${chars.length - i}:${ch}`} ch={ch} animate={armed} />
-      ))}
-    </>
-  );
-}
 
 function TaskLine({ task }: { task: Task }) {
   return (
@@ -303,8 +279,7 @@ function FocusPhase({ timer, task, nowMs }: { timer: TimerState; task: Task; now
     if (!minutesOk) return;
     finishFocus({ nowMs, minutes: Math.round(minutes), taskDone, then: "stop" });
   };
-  const takeBreak = () =>
-    finishFocus({ nowMs, minutes: suggestedMinutes(timer, nowMs), taskDone: false, then: "break" });
+  const takeBreak = () => finishFocus(breakFrom(timer, nowMs));
 
   return (
     <section
@@ -394,6 +369,7 @@ function FocusPhase({ timer, task, nowMs }: { timer: TimerState; task: Task; now
             <Button variant="secondary" onClick={openWrap}>
               <Square className="h-4 w-4" /> Stop
             </Button>
+            <PopoutButton />
           </div>
         </>
       )}
@@ -439,6 +415,7 @@ function Break({ timer, task, nowMs }: { timer: TimerState; task: Task; nowMs: n
         <Button variant="ghost" onClick={clear}>
           Done for now
         </Button>
+        <PopoutButton />
       </div>
     </section>
   );

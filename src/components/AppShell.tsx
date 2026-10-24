@@ -10,6 +10,7 @@ import {
   Timer,
 } from "lucide-react";
 import { Celebrations } from "@/components/Celebrations";
+import { PopoutHost } from "@/components/TimerPopout";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { TimerDock } from "@/components/TimerDock";
@@ -159,6 +160,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 {children}
               </div>
               <TimerDock />
+              <PopoutHost />
               <Celebrations />
             </>
           ) : (
