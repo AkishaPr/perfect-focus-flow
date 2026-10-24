@@ -10,6 +10,7 @@ import {
   usePopout,
 } from "@/lib/focus/popout";
 import {
+  closeByHand,
   fakePopoutWindow,
   removeFakePopouts,
   removePictureInPictureStub,
@@ -54,6 +55,37 @@ describe("is the pop-out on offer?", () => {
   });
 });
 
+const ELECTRON_UA =
+  "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Electron/45.0.0 Safari/537.36";
+
+describe("inside Electron", () => {
+  // Electron has the Picture-in-Picture API but no window to show it in: requestWindow()
+  // resolves, and the window it hands over is closed again within milliseconds.
+  it("never offers Picture-in-Picture, and opens an ordinary window instead", async () => {
+    vi.spyOn(navigator, "userAgent", "get").mockReturnValue(ELECTRON_UA);
+    finePointer(true);
+    const pip = stubPictureInPicture(fakePopoutWindow());
+    const win = fakePopoutWindow();
+    vi.spyOn(window, "open").mockReturnValue(win);
+
+    expect(canStayOnTop()).toBe(false);
+    expect(isPopoutAvailable()).toBe(true);
+    expect(await usePopout.getState().open()).toBe("opened");
+
+    expect(pip.requestWindow).not.toHaveBeenCalled();
+    expect(usePopout.getState().kind).toBe("window");
+    expect(usePopout.getState().win === win).toBe(true);
+  });
+
+  it("is only the Electron app: other browsers keep Picture-in-Picture", () => {
+    vi.spyOn(navigator, "userAgent", "get").mockReturnValue(
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/156.0.0.0 Safari/537.36",
+    );
+    stubPictureInPicture(fakePopoutWindow());
+    expect(canStayOnTop()).toBe(true);
+  });
+});
+
 describe("opening", () => {
   it("uses Picture-in-Picture when the browser has it, at the default size", async () => {
     const win = fakePopoutWindow();
@@ -78,6 +110,24 @@ describe("opening", () => {
     expect(features).toContain(`width=${POPOUT_SIZE.width}`);
     expect(features).toContain(`height=${POPOUT_SIZE.height}`);
     expect(usePopout.getState()).toMatchObject({ win, kind: "window" });
+  });
+
+  it("falls back to a small window if the Picture-in-Picture window closes straight away", async () => {
+    const dead = fakePopoutWindow();
+    const pip = stubPictureInPicture(dead);
+    // Resolves, then the window is gone a moment later (what a host without a PiP window does).
+    pip.requestWindow.mockImplementation(async () => {
+      setTimeout(() => closeByHand(dead), 5);
+      return dead;
+    });
+    const win = fakePopoutWindow();
+    vi.spyOn(window, "open").mockReturnValue(win);
+
+    expect(await usePopout.getState().open()).toBe("opened");
+
+    expect(pip.requestWindow).toHaveBeenCalledTimes(1);
+    expect(usePopout.getState().kind).toBe("window");
+    expect(usePopout.getState().win === win).toBe(true);
   });
 
   it("falls back to a small window if Picture-in-Picture is refused", async () => {
