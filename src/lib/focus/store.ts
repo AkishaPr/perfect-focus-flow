@@ -8,6 +8,7 @@ import {
   pause,
   resume,
   startTimer,
+  suggestedMinutes,
   toBreak,
   toFocus,
   type TimerState,
@@ -147,6 +148,18 @@ export const useTimer = create<{ timer: TimerState | null } & TimerActions>()(
     },
   ),
 );
+
+/**
+ * What "Take a break" logs when a focus block has reached its target: the minutes the clock
+ * suggests, the task not done, then on into the break. Shared by the Focus page and the pop-out
+ * player so the two always do the same thing.
+ */
+export const breakFrom = (timer: TimerState, nowMs: number) => ({
+  nowMs,
+  minutes: suggestedMinutes(timer, nowMs),
+  taskDone: false,
+  then: "break" as const,
+});
 
 /** Load a saved timer (call once on the client, next to `hydrateStore`). */
 export async function hydrateTimer(): Promise<void> {

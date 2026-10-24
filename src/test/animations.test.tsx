@@ -9,7 +9,7 @@ import {
 import { act, cleanup, render, renderHook, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CheckTick } from "@/components/CheckTick";
-import { AnimatedClock } from "@/components/Focus";
+import { AnimatedClock } from "@/components/AnimatedClock";
 import { ProgressRing } from "@/components/ProgressRing";
 import { Recovery } from "@/components/Recovery";
 import { SparkleBurst } from "@/components/SparkleBurst";
