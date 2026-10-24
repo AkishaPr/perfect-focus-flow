@@ -20,15 +20,25 @@ export type OpenResult = "opened" | "blocked";
 
 /** Default size: the clock, the task, two buttons and the bar. People can resize it. */
 export const POPOUT_SIZE = { width: 340, height: 200 } as const;
-const POPOUT_NAME = "alcc-timer-popout";
+export const POPOUT_NAME = "alcc-timer-popout";
+/** How long a Picture-in-Picture window must stay open before it is trusted. */
+const PIP_SETTLE_MS = 60;
 
 /** The parts of the Document Picture-in-Picture API this uses (not yet in TypeScript's DOM types). */
 interface DocumentPictureInPicture {
   requestWindow(options?: { width?: number; height?: number }): Promise<Window>;
 }
 
+/**
+ * Electron. Its Chromium has the Picture-in-Picture API, but there is no window for it to use:
+ * `requestWindow()` resolves with a 0x0 window that is closed again within a few milliseconds.
+ * It must never be taken for the real thing there.
+ */
+export const isElectron = (): boolean =>
+  typeof navigator !== "undefined" && /\bElectron\//.test(navigator.userAgent);
+
 const pipApi = (): DocumentPictureInPicture | undefined =>
-  typeof window === "undefined"
+  typeof window === "undefined" || isElectron()
     ? undefined
     : (window as unknown as { documentPictureInPicture?: DocumentPictureInPicture })
         .documentPictureInPicture;
@@ -50,7 +60,11 @@ async function requestWindow(): Promise<{ win: Window; kind: PopoutKind } | null
   const pip = pipApi();
   if (pip) {
     try {
-      return { win: await pip.requestWindow({ ...POPOUT_SIZE }), kind: "pip" };
+      const win = await pip.requestWindow({ ...POPOUT_SIZE });
+      // A host that has the API but no window to show (Electron is one) still resolves, then
+      // closes the window at once. Believe it only once it has stayed open for a moment.
+      await new Promise((resolve) => setTimeout(resolve, PIP_SETTLE_MS));
+      if (!win.closed) return { win, kind: "pip" };
     } catch {
       // Refused (for instance, there was no click behind it): try an ordinary window instead.
     }

@@ -17,6 +17,7 @@ import { useNow } from "@/hooks/use-now";
 import { breakFrom, useTimer } from "@/lib/focus/store";
 import {
   canStayOnTop,
+  isElectron,
   isPopoutAvailable,
   preparePopoutWindow,
   usePopout,
@@ -339,7 +340,9 @@ export function PopoutButton({
     if (isOpen) return close();
     if ((await open()) === "blocked") {
       toast.error("Couldn't open the pop-out", {
-        description: "Your browser blocked the window. Allow pop-ups for this site and try again.",
+        description: isElectron()
+          ? "This app's window settings blocked the new window."
+          : "Your browser blocked the window. Allow pop-ups for this site and try again.",
       });
     }
   };
