@@ -1,4 +1,4 @@
-import { ymd } from "@/lib/calendar";
+import { studyDayKey } from "@/lib/calendar";
 import { studyForWeek } from "@/lib/progress";
 
 /**
@@ -22,7 +22,7 @@ export interface GoalSnapshot {
 
 export function goalSnapshot(data: Parameters<typeof studyForWeek>[0], now: Date): GoalSnapshot {
   const week = studyForWeek(data, now, now);
-  const dayKey = ymd(now);
+  const dayKey = studyDayKey(now);
   return {
     dayKey,
     weekKey: week.weekStart,

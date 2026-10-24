@@ -1,4 +1,4 @@
-import { addDays, weekStart, ymd } from "./calendar";
+import { addDays, studyDayKey, studyDayStart, weekStart, ymd } from "./calendar";
 import { goalProgress, type GoalProgress } from "./goals";
 import { STUCK_CARRY_OVER } from "./planner/scoring";
 import { studiedMinOn } from "./planner/studied";
@@ -58,7 +58,7 @@ type StudyData = Pick<StoreData, "tasks" | "blocks" | "sessions" | "settings">;
 
 export function studyForWeek(data: StudyData, anchor: Date, now: Date): WeekStudy {
   const monday = weekStart(anchor);
-  const today = ymd(now);
+  const today = studyDayKey(now);
   const subjectOf = new Map(data.tasks.map((t) => [t.id, t.subject]));
   // The same definition as everywhere else, restricted to one subject's blocks and sessions
   // (exactly how `studiedMinForTaskOn` restricts it to one task).
@@ -118,8 +118,8 @@ export function weeklyTotals(
   now: Date,
   count = 6,
 ): WeekTotal[] {
-  const thisMonday = weekStart(now);
-  const today = ymd(now);
+  const thisMonday = weekStart(studyDayStart(now));
+  const today = studyDayKey(now);
   return Array.from({ length: count }, (_, i): WeekTotal => {
     const monday = addDays(thisMonday, -7 * (count - 1 - i));
     let totalMin = 0;
@@ -204,7 +204,7 @@ export interface Attention {
 
 /** How things stand right now (not tied to a week). Uses the same "open" as the Today page. */
 export function attentionNow(tasks: Task[], now: Date): Attention {
-  const today = ymd(now);
+  const today = studyDayKey(now);
   const open = tasks.filter((t) => t.status !== "done" && t.status !== "deferred");
   return {
     open: open.length,

@@ -9,7 +9,7 @@ import { STATUS_LABEL, TaskDialog, blankTask } from "@/components/TaskDialog";
 import { useLinger } from "@/hooks/use-linger";
 import { LINGER_MS, stagger } from "@/lib/motion";
 import { useStore } from "@/lib/store";
-import { ymd } from "@/lib/calendar";
+import { studyDayKey } from "@/lib/calendar";
 import {
   SUBJECTS,
   SUBJECT_LABEL,
@@ -150,7 +150,7 @@ function TasksPage() {
   const [subject, setSubject] = useState("");
   const [type, setType] = useState("");
   const [status, setStatus] = useState("open");
-  const today = ymd(new Date());
+  const today = studyDayKey(new Date());
   // A task ticked off in the Open view stays for a moment, so its reward is seen before it leaves.
   const { held, hold, release } = useLinger(LINGER_MS);
   const toggle = (t: Task) => {

@@ -1,4 +1,4 @@
-import { studyDayKey, toMin } from "../calendar";
+import { dayMin, studyDayKey } from "../calendar";
 import type { PlanBlock, Session } from "../types";
 
 /** The local calendar day a session started on, or null if its timestamp can't be read. */
@@ -24,7 +24,7 @@ export function studiedMinOn(date: string, blocks: PlanBlock[], sessions: Sessio
       (b) =>
         b.date === date && (b.status === "done" || b.status === "partial") && !linked.has(b.id),
     )
-    .reduce((sum, b) => sum + Math.max(0, toMin(b.end) - toMin(b.start)), 0);
+    .reduce((sum, b) => sum + Math.max(0, dayMin(b.end) - dayMin(b.start)), 0);
   return fromSessions + fromBlocks;
 }
 

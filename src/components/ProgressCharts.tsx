@@ -2,7 +2,7 @@ import { Check } from "lucide-react";
 import { SUBJECT_BG } from "@/components/subject-colors";
 import { formatMinutes, formatPercent } from "@/lib/format";
 import { chartGeometry, smoothPath, spreadLabels } from "@/lib/marks";
-import { ymd } from "@/lib/calendar";
+import { studyDayKey } from "@/lib/calendar";
 import type { WeekStudy, WeekTotal } from "@/lib/progress";
 import { stagger } from "@/lib/motion";
 import { SUBJECTS, SUBJECT_LABEL, type PaperMark, type Subject } from "@/lib/types";
@@ -81,7 +81,7 @@ function BarValue({ min, met, hidden }: { min: number; met: boolean; hidden?: bo
 
 export function DailyBars({ week }: { week: WeekStudy }) {
   const scale = Math.max(week.dailyGoalMin, ...week.days.map((d) => d.totalMin), 1);
-  const today = ymd(new Date());
+  const today = studyDayKey(new Date());
   return (
     <ol
       aria-label="Study time per day"

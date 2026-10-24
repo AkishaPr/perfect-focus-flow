@@ -1,4 +1,4 @@
-import { weekStart, ymd } from "./calendar";
+import { studyDayStart, weekStart, ymd } from "./calendar";
 import type { Goal, Task } from "./types";
 
 export interface GoalProgress {
@@ -18,7 +18,11 @@ export function goalProgress(goal: Goal, tasks: Task[]): GoalProgress {
 }
 
 /** Goals offered in the task editor: the task's deadline week (or this week), plus the currently linked goal. */
-export function goalsForTask(goals: Goal[], task: Pick<Task, "deadline" | "goalId">, today = new Date()): Goal[] {
+export function goalsForTask(
+  goals: Goal[],
+  task: Pick<Task, "deadline" | "goalId">,
+  today = studyDayStart(new Date()),
+): Goal[] {
   const ref = task.deadline ? new Date(`${task.deadline}T00:00:00`) : today;
   const wk = ymd(weekStart(ref));
   return goals.filter((g) => g.weekStart === wk || g.id === task.goalId);

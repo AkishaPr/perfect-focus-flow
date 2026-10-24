@@ -130,7 +130,7 @@ describe("studyForWeek", () => {
     expect(w.otherMin).toBe(20);
   });
 
-  it("assigns sessions before 02:30 to the previous study day, including across Sunday night", () => {
+  it("assigns sessions before 03:00 to the previous study day, including across Sunday night", () => {
     const after = at(26, 12);
     const d = data({
       sessions: [sess("sun", "m", at(25, 23, 30), 20), sess("mon", "m", at(26, 0, 10), 15)],

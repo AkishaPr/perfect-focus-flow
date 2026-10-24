@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { useNow } from "@/hooks/use-now";
-import { toMin, ymd } from "@/lib/calendar";
+import { studyDayKey, toMin } from "@/lib/calendar";
 import { breakFrom, useTimer } from "@/lib/focus/store";
 import {
   MS_PER_MIN,
@@ -430,7 +430,7 @@ function SessionsToday({ now }: { now: Date }) {
   const blocks = useStore((s) => s.blocks);
   const tasks = useStore((s) => s.tasks);
   const deleteSession = useStore((s) => s.deleteSession);
-  const today = ymd(now);
+  const today = studyDayKey(now);
   const todays = sessions
     .filter((s) => sessionDate(s) === today)
     .sort((a, z) => z.start.localeCompare(a.start));

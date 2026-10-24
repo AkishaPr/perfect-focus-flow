@@ -1,4 +1,4 @@
-import { eventsOn, studyDayKey, toMin, ymd } from "../calendar";
+import { dayMin, eventsOn, studyDayKey, studyDayStart, studyMinute } from "../calendar";
 import type { CalEvent, PlanBlock, StoreData, Task } from "../types";
 import { startOfDay } from "./dates";
 import { generatePlan } from "./index";
@@ -85,8 +85,8 @@ const KIND_ORDER = { event: 0, block: 1, done: 2 } as const;
  * committed to ("Start"), so they are passed to the planner as locked and it plans around them.
  */
 export function buildToday(data: TodayData, now: Date, options: PlannerOptions = {}): TodayView {
-  const todayStr = ymd(now);
-  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const todayStr = studyDayKey(now);
+  const nowMin = studyMinute(now);
   const tasksById = new Map(data.tasks.map((t) => [t.id, t]));
 
   const committed = data.blocks.filter((b) => b.status === "planned");
@@ -110,7 +110,7 @@ export function buildToday(data: TodayData, now: Date, options: PlannerOptions =
       ? {
           block: activeBlock,
           task: activeTask,
-          overrun: activeBlock.date < todayStr || toMin(activeBlock.end) <= nowMin,
+          overrun: activeBlock.date < todayStr || dayMin(activeBlock.end) <= nowMin,
         }
       : null;
 
@@ -123,13 +123,13 @@ export function buildToday(data: TodayData, now: Date, options: PlannerOptions =
           task: nextTask,
           isToday: nextBlock.date === todayStr,
           startsInMin:
-            nextBlock.date === todayStr ? Math.max(0, toMin(nextBlock.start) - nowMin) : null,
+            nextBlock.date === todayStr ? Math.max(0, dayMin(nextBlock.start) - nowMin) : null,
         }
       : null;
 
   // ---- today's timeline: classes, finished work, active work, and what's planned ----
   const timeline: TimelineEntry[] = [];
-  for (const e of eventsOn(data.events, startOfDay(now))) {
+  for (const e of eventsOn(data.events, studyDayStart(now))) {
     timeline.push({ kind: "event", key: `event:${e.id}`, start: e.start, end: e.end, event: e });
   }
   const doneToday = data.blocks.filter(
@@ -175,7 +175,7 @@ export function buildToday(data: TodayData, now: Date, options: PlannerOptions =
   }
   timeline.sort(
     (a, z) =>
-      a.start.localeCompare(z.start) ||
+      dayMin(a.start) - dayMin(z.start) ||
       KIND_ORDER[a.kind] - KIND_ORDER[z.kind] ||
       a.key.localeCompare(z.key),
   );
@@ -184,7 +184,7 @@ export function buildToday(data: TodayData, now: Date, options: PlannerOptions =
   const open = data.tasks.filter((t) => t.status !== "done" && t.status !== "deferred");
   const stats: TodayStats = {
     plannedMin: plan.capacity[0]?.plannedMin ?? 0,
-    doneMin: studiedMinOn(studyDayKey(now), data.blocks, data.sessions),
+    doneMin: studiedMinOn(todayStr, data.blocks, data.sessions),
     dailyGoalMin: data.settings.dailyGoalMin,
     dueToday: open.filter((t) => t.deadline === todayStr).length,
     overdue: open.filter((t) => t.deadline !== undefined && t.deadline < todayStr).length,

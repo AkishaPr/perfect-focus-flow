@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist, type PersistStorage } from "zustand/middleware";
-import { fromMin, toMin, ymd } from "./calendar";
+import { dayMin, fromMin, studyDayKey, studyMinute } from "./calendar";
 import {
   deleteSessionState,
   markInProgress,
@@ -217,12 +217,12 @@ export function releaseBlockState(s: BlockState, blockId: string): BlockState {
 export function completeBlockState(s: BlockState, blockId: string, now = new Date()): BlockState {
   const b = s.blocks.find((x) => x.id === blockId);
   if (!b || b.status !== "planned") return s;
-  const nowMin = now.getHours() * 60 + now.getMinutes();
-  const finishedEarly = nowMin >= toMin(b.start) + 5 && nowMin < toMin(b.end);
+  const nowMin = studyMinute(now);
+  const finishedEarly = nowMin >= dayMin(b.start) + 5 && nowMin < dayMin(b.end);
   const done: PlanBlock = {
     ...b,
     status: "done",
-    end: finishedEarly && b.date === ymd(now) ? fromMin(nowMin) : b.end,
+    end: finishedEarly && b.date === studyDayKey(now) ? fromMin(nowMin % 1440) : b.end,
   };
   return {
     blocks: s.blocks

@@ -1,4 +1,4 @@
-import { eventsOn, toMin, windowsOn, ymd } from "../calendar";
+import { eventsOn, studyDayKey, studyMinute, toMin, windowsOn, ymd } from "../calendar";
 import type { CalEvent, StudyWindow } from "../types";
 
 /** Minutes from local midnight, end exclusive. */
@@ -86,9 +86,9 @@ export function buildDaySlots(args: {
     ...eventsOn(events, date).map((e) => eventBlocker(e, opts)),
     ...occupied,
   ];
-  if (day === ymd(now)) {
-    const nowMin = now.getHours() * 60 + now.getMinutes();
-    cuts.push({ start: 0, end: nowMin });
+  if (day === studyDayKey(now)) {
+    // Past midnight, but still the same study day: nothing is left of today's windows.
+    cuts.push({ start: 0, end: studyMinute(now) });
   }
   const snap = opts.snapMin;
   return subtractIntervals(base, cuts)

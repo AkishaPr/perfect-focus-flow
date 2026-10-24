@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { uid, useStore } from "@/lib/store";
-import { addDays, weekStart, ymd } from "@/lib/calendar";
+import { addDays, studyDayStart, weekStart, ymd } from "@/lib/calendar";
 import { goalProgress } from "@/lib/goals";
 import { stagger } from "@/lib/motion";
 import { TASK_TYPES, type Goal, type TaskType } from "@/lib/types";
@@ -32,7 +32,7 @@ function GoalsPage() {
   const upsert = useStore((s) => s.upsertGoal);
   const del = useStore((s) => s.deleteGoal);
   const [editing, setEditing] = useState<Goal | null>(null);
-  const [anchor, setAnchor] = useState(() => weekStart(new Date()));
+  const [anchor, setAnchor] = useState(() => weekStart(studyDayStart(new Date())));
   const [form, setForm] = useState<{ title: string; type: TaskType; target: number }>({
     title: "",
     type: "paper",
@@ -56,7 +56,10 @@ function GoalsPage() {
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <Button variant="secondary" onClick={() => setAnchor(weekStart(new Date()))}>
+            <Button
+              variant="secondary"
+              onClick={() => setAnchor(weekStart(studyDayStart(new Date())))}
+            >
               This week
             </Button>
             <Button
@@ -160,12 +163,23 @@ function GoalsPage() {
                       className="w-24"
                       aria-label="Goal target"
                       value={editing.target}
-                      onChange={(e) => setEditing({ ...editing, target: Number(e.target.value) || 0 })}
+                      onChange={(e) =>
+                        setEditing({ ...editing, target: Number(e.target.value) || 0 })
+                      }
                     />
                   </div>
-                  {bad && <p className="text-xs text-destructive">Add a title and a target of at least 1.</p>}
+                  {bad && (
+                    <p className="text-xs text-destructive">
+                      Add a title and a target of at least 1.
+                    </p>
+                  )}
                   <div className="flex justify-end gap-2">
-                    <Button type="button" variant="secondary" size="sm" onClick={() => setEditing(null)}>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => setEditing(null)}
+                    >
                       Cancel
                     </Button>
                     <Button type="submit" size="sm" disabled={bad}>
@@ -189,7 +203,12 @@ function GoalsPage() {
                     </div>
                   </div>
                   <div className="flex">
-                    <Button variant="ghost" size="icon" aria-label="Edit goal" onClick={() => setEditing(g)}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Edit goal"
+                      onClick={() => setEditing(g)}
+                    >
                       <Pencil className="h-4 w-4" />
                     </Button>
                     <Button
@@ -197,7 +216,12 @@ function GoalsPage() {
                       size="icon"
                       aria-label="Delete goal"
                       onClick={() => {
-                        if (window.confirm(`Delete goal "${g.title}"? Linked tasks are kept, just unlinked.`)) del(g.id);
+                        if (
+                          window.confirm(
+                            `Delete goal "${g.title}"? Linked tasks are kept, just unlinked.`,
+                          )
+                        )
+                          del(g.id);
                       }}
                     >
                       <Trash2 className="h-4 w-4" />

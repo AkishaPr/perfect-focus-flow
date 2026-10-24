@@ -12,7 +12,15 @@
  *  3. Splittable tasks are cut into focus-sized blocks with breaks; others need one contiguous gap.
  *  4. Whatever doesn't fit is reported, with a reason, never silently dropped or overbooked.
  */
-import { addDays, fromMin, toMin } from "../calendar";
+import {
+  addDays,
+  dayMin,
+  fromMin,
+  studyDayKey,
+  studyDayStart,
+  studyMinute,
+  toMin,
+} from "../calendar";
 import type { PlanBlock, Subject, Task } from "../types";
 import { buildDaySlots, windowMinutes, type Slot } from "./availability";
 import { daysBetween, parseYmd, startOfDay, ymd } from "./dates";
@@ -62,11 +70,11 @@ const SEVERITY = { high: 0, medium: 1, low: 2 } as const;
 
 /** Planned blocks whose end has already passed: input for the (Stage 7) missed-task flow. */
 export function findMissedBlocks(blocks: PlanBlock[], now: Date): PlanBlock[] {
-  const today = ymd(now);
-  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const today = studyDayKey(now);
+  const nowMin = studyMinute(now);
   return blocks.filter(
     (b) =>
-      b.status === "planned" && (b.date < today || (b.date === today && toMin(b.end) <= nowMin)),
+      b.status === "planned" && (b.date < today || (b.date === today && dayMin(b.end) <= nowMin)),
   );
 }
 
@@ -93,9 +101,9 @@ const byTieBreak = (a: Task, b: Task) =>
 export function generatePlan(input: PlannerInput): PlanResult {
   const opts = resolveOptions(input.options);
   const { now, settings } = input;
-  const today = startOfDay(now);
+  const today = studyDayStart(now);
   const todayStr = ymd(today);
-  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const nowMin = studyMinute(now);
   const dates = Array.from({ length: opts.horizonDays }, (_, i) => addDays(today, i));
   const dateStrs = dates.map(ymd);
   const lastDate = dates[dates.length - 1]!;
@@ -111,7 +119,7 @@ export function generatePlan(input: PlannerInput): PlanResult {
       t !== undefined &&
       t.status !== "done" &&
       dateStrs.includes(b.date) &&
-      (b.date !== todayStr || toMin(b.end) > nowMin)
+      (b.date !== todayStr || dayMin(b.end) > nowMin)
     );
   });
   const lockedMinFor = new Map<string, number>();
