@@ -1,4 +1,12 @@
-import { eventsOn, studyDayKey, studyMinute, toMin, windowsOn, ymd } from "../calendar";
+import {
+  eventOccurrences,
+  eventRange,
+  studyDayKey,
+  studyMinute,
+  toMin,
+  windowsOn,
+  ymd,
+} from "../calendar";
 import type { CalEvent, StudyWindow } from "../types";
 
 /** Minutes from local midnight, end exclusive. */
@@ -53,7 +61,8 @@ export function subtractIntervals(base: Interval[], cuts: Interval[]): Interval[
 /** The time an event keeps clear: its own span plus a travel / log-on buffer on both sides. */
 export function eventBlocker(e: CalEvent, o: AvailabilityOptions): Interval {
   const buf = e.mode === "physical" ? o.physicalBufferMin : o.onlineBufferMin;
-  return { start: Math.max(0, toMin(e.start) - buf), end: Math.min(1440, toMin(e.end) + buf) };
+  const range = eventRange(e);
+  return { start: range.start - buf, end: range.end + buf };
 }
 
 /** Total study-window minutes on a date (overlapping windows counted once). */
@@ -83,7 +92,10 @@ export function buildDaySlots(args: {
   const day = ymd(date);
   const base = windowsOn(windows, date).map((w) => ({ start: toMin(w.start), end: toMin(w.end) }));
   const cuts: Interval[] = [
-    ...eventsOn(events, date).map((e) => eventBlocker(e, opts)),
+    ...eventOccurrences(events, date).map(({ event, start, end }) => {
+      const buf = event.mode === "physical" ? opts.physicalBufferMin : opts.onlineBufferMin;
+      return { start: start - buf, end: end + buf };
+    }),
     ...occupied,
   ];
   if (day === studyDayKey(now)) {

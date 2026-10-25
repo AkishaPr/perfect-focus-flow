@@ -127,18 +127,22 @@ function describe(entry: TimelineEntry) {
 }
 
 function TimelineRow({ entry }: { entry: TimelineEntry }) {
+  const displayTime = (time: string) => {
+    const [h, m] = time.split(":");
+    return `${String(Number(h) % 24).padStart(2, "0")}:${m}${Number(h) >= 24 ? " (+1 day)" : ""}`;
+  };
   const { title, tag, subject, tone, done, active } = describe(entry);
   const dot = active ? SIGNAL_FILL : subject ? SUBJECT_BG[subject] : "bg-muted-foreground";
   return (
     <li className={ROW}>
       <div className="pt-3.5 text-right font-mono text-xs leading-tight text-muted-foreground">
         <span className="sr-only">
-          {entry.start}–{entry.end}
+          {displayTime(entry.start)}–{displayTime(entry.end)}
         </span>
         <span aria-hidden="true">
-          {entry.start}
+          {displayTime(entry.start)}
           <br />
-          <span className="opacity-70">{entry.end}</span>
+          <span className="opacity-70">{displayTime(entry.end)}</span>
         </span>
       </div>
       <div className="relative" aria-hidden="true">

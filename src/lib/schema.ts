@@ -56,7 +56,7 @@ export const eventSchema = z
     end: timeStr,
   })
   .superRefine((e, ctx) => {
-    if (toMin(e.end) <= toMin(e.start)) ctx.addIssue({ code: "custom", message: "end <= start" });
+    if (e.end === e.start) ctx.addIssue({ code: "custom", message: "start equals end" });
     if (e.recurrence === "weekly" && e.weekday === undefined)
       ctx.addIssue({ code: "custom", message: "weekly event needs weekday" });
     if (e.recurrence === "none" && !(e.date && isRealDate(e.date)))

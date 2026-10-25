@@ -36,8 +36,16 @@ describe("EventDialog validation", () => {
     expect(screen.getByRole("button", { name: "Save" })).toBeEnabled();
   });
 
-  it("still blocks end before start", () => {
-    open({ ...base, start: "16:00", end: "14:00" });
+  it("allows an overnight event and explains its end date", () => {
+    open({ ...base, start: "23:09", end: "02:29" });
+    expect(screen.getByRole("button", { name: "Save" })).toBeEnabled();
+    expect(screen.getByText("Ends the following day at 02:29.")).toBeInTheDocument();
+  });
+  it("rejects an empty time or equal start and end", () => {
+    open({ ...base, start: "14:00", end: "14:00" });
+    expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
+    cleanup();
+    open({ ...base, start: "" });
     expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
   });
 });

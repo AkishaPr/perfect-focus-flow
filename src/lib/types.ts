@@ -66,10 +66,10 @@ export interface CalEvent {
   mode: "online" | "physical";
   subject?: Subject | undefined;
   recurrence: "none" | "weekly";
-  date?: string; // yyyy-MM-dd
-  weekday?: number;
+  date?: string; // yyyy-MM-dd, calendar start date
+  weekday?: number; // calendar start weekday
   start: string;
-  end: string;
+  end: string; // Earlier than start means the following calendar day; equal times are invalid.
 }
 
 export interface Task {

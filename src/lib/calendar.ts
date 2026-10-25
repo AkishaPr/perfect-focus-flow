@@ -63,6 +63,39 @@ export function eventsOn(events: CalEvent[], date: Date): CalEvent[] {
     .sort((a, b) => toMin(a.start) - toMin(b.start));
 }
 
+/** Calendar span relative to the midnight on which an event starts. */
+export function eventRange(e: CalEvent) {
+  const start = toMin(e.start);
+  const end = toMin(e.end);
+  return { start, end: end < start ? end + DAY_MIN : end };
+}
+
+/** Occurrences near a date, including yesterday's overnight tail and tomorrow's buffers. */
+export function eventOccurrences(events: CalEvent[], date: Date) {
+  return [-1, 0, 1].flatMap((offset) =>
+    eventsOn(events, addDays(date, offset)).map((event) => {
+      const range = eventRange(event);
+      return {
+        event,
+        start: range.start + offset * DAY_MIN,
+        end: range.end + offset * DAY_MIN,
+      };
+    }),
+  );
+}
+
+/** Project calendar events into a study-day column, without changing their saved dates. */
+export function studyDayEvents(events: CalEvent[], date: Date) {
+  return eventOccurrences(events, date)
+    .filter((e) => e.start < DAY_MIN + STUDY_DAY_END_MIN && e.end > STUDY_DAY_END_MIN)
+    .map(({ event, start, end }) => ({
+      ...event,
+      event,
+      start: fromMin(Math.max(STUDY_DAY_END_MIN, start)),
+      end: fromMin(Math.min(DAY_MIN + STUDY_DAY_END_MIN, end)),
+    }));
+}
+
 export const windowsOn = (windows: StudyWindow[], date: Date) =>
   windows.filter((w) => w.day === date.getDay());
 
@@ -76,7 +109,9 @@ export function overlappingIds(evs: CalEvent[]): Set<string> {
     for (let j = i + 1; j < evs.length; j++) {
       const a = evs[i]!,
         b = evs[j]!;
-      if (toMin(a.start) < toMin(b.end) && toMin(b.start) < toMin(a.end)) {
+      const ar = eventRange(a);
+      const br = eventRange(b);
+      if (ar.start < br.end && br.start < ar.end) {
         out.add(a.id);
         out.add(b.id);
       }
@@ -99,7 +134,7 @@ export interface EventSlot {
 export function layoutOverlaps(evs: CalEvent[]): Map<string, EventSlot> {
   const out = new Map<string, EventSlot>();
   const sorted = [...evs].sort(
-    (a, b) => toMin(a.start) - toMin(b.start) || toMin(a.end) - toMin(b.end),
+    (a, b) => eventRange(a).start - eventRange(b).start || eventRange(a).end - eventRange(b).end,
   );
   let cluster: { ev: CalEvent; col: number }[] = [];
   let colEnds: number[] = [];
@@ -113,8 +148,7 @@ export function layoutOverlaps(evs: CalEvent[]): Map<string, EventSlot> {
   };
 
   for (const ev of sorted) {
-    const start = toMin(ev.start);
-    const end = Math.max(toMin(ev.end), start);
+    const { start, end } = eventRange(ev);
     if (cluster.length > 0 && start >= clusterEnd) flush();
     let col = colEnds.findIndex((e) => e <= start);
     if (col === -1) col = colEnds.length;

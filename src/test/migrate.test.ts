@@ -141,11 +141,11 @@ describe("migrate: skips bad entries and reports them", () => {
     expect(report.dropped["tasks"]).toBe(1);
   });
 
-  it("validates events: end before start, missing weekday, one-time without date", () => {
+  it("validates events: equal start and end, missing weekday, one-time without date", () => {
     const { data, report } = migrateWithReport({
       events: [
         event(),
-        event({ id: "bad1", start: "16:00", end: "14:00" }),
+        event({ id: "bad1", start: "16:00", end: "16:00" }),
         { ...event({ id: "bad2" }), weekday: undefined },
         event({ id: "bad3", recurrence: "none", date: "" }),
         event({ id: "bad4", recurrence: "none", date: "2026-02-31" }),

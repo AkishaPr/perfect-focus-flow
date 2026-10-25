@@ -11,7 +11,7 @@ import {
   addDays,
   blocksOn,
   dayMin,
-  eventsOn,
+  studyDayEvents,
   fromMin,
   layoutOverlaps,
   overlappingIds,
@@ -40,7 +40,7 @@ export const Route = createFileRoute("/week")({
   component: WeekPage,
 });
 
-const START = 5 * 60;
+const START = 3 * 60;
 // The grid runs to 03:00 the next morning (27:00), where the study day ends.
 const END = 27 * 60;
 const PX = 1; // px per minute
@@ -146,7 +146,10 @@ function WeekPage() {
         <span className="flex items-center gap-1.5">
           <span className="h-0.5 w-5 rounded-full bg-signal" /> Now
         </span>
-        <span className="sm:ml-auto">Click an empty slot to add an event.</span>
+        <span className="sm:ml-auto">
+          Columns are study days (03:00–03:00). After midnight is the following calendar date. Click
+          an empty slot to add an event.
+        </span>
       </div>
 
       <div
@@ -199,7 +202,7 @@ function WeekPage() {
           </div>
 
           {days.map((d) => {
-            const evs = eventsOn(events, d);
+            const evs = studyDayEvents(events, d);
             const clash = overlappingIds(evs);
             const slots = layoutOverlaps(evs);
             const isToday = ymd(d) === today;
@@ -214,7 +217,10 @@ function WeekPage() {
                 onClick={(ev) => {
                   const y = ev.clientY - ev.currentTarget.getBoundingClientRect().top;
                   const m = START + Math.floor(y / PX / 30) * 30;
-                  setEditing(blankEvent(d, fromMin(Math.min(m, END - 60))));
+                  const minute = Math.min(m, END - 30);
+                  setEditing(
+                    blankEvent(addDays(d, minute >= 1440 ? 1 : 0), fromMin(minute % 1440)),
+                  );
                 }}
               >
                 {Array.from({ length: (END - START) / 60 }, (_, i) => (
@@ -229,6 +235,17 @@ function WeekPage() {
                     />
                   </div>
                 ))}
+
+                <div
+                  className="pointer-events-none absolute inset-x-0 border-t-2 border-dashed border-border text-[10px] text-muted-foreground"
+                  style={{ top: (1440 - START) * PX }}
+                >
+                  {addDays(d, 1).toLocaleDateString(undefined, {
+                    weekday: "short",
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </div>
 
                 {windowsOn(windows, d).map((w, i) => (
                   <div
@@ -261,7 +278,7 @@ function WeekPage() {
 
                 {evs.map((e) => {
                   const slot = slots.get(e.id) ?? { col: 0, cols: 1 };
-                  const h = height(e.start, e.end);
+                  const h = Math.max(14, (clamp(toMin(e.end)) - clamp(toMin(e.start))) * PX);
                   const compact = h < COMPACT_PX;
                   const clashes = clash.has(e.id);
                   return (
@@ -269,12 +286,12 @@ function WeekPage() {
                       key={e.id}
                       onClick={(x) => {
                         x.stopPropagation();
-                        setEditing(e);
+                        setEditing(e.event);
                       }}
-                      title={`${e.title}, ${e.start}–${e.end}${clashes ? " · overlaps another event" : ""}`}
+                      title={`${e.title}, ${e.event.start}–${e.event.end}${e.event.end < e.event.start ? " (+1 day)" : ""}${clashes ? " · overlaps another event" : ""}`}
                       className={`absolute overflow-hidden rounded-md border-l-4 px-1.5 text-left text-[11px] leading-tight outline-offset-1 hover:brightness-110 focus-visible:outline-2 focus-visible:outline-ring ${compact ? "flex items-center py-0" : "py-1"} ${e.subject ? SUBJECT_EVENT[e.subject] : "border-l-muted-foreground bg-muted"} ${clashes ? "ring-1 ring-destructive" : ""}`}
                       style={{
-                        top: top(e.start),
+                        top: (clamp(toMin(e.start)) - START) * PX,
                         height: h,
                         left: `calc(${(slot.col / slot.cols) * 100}% + 2px)`,
                         width: `calc(${100 / slot.cols}% - 4px)`,
@@ -290,7 +307,9 @@ function WeekPage() {
                       </div>
                       {!compact && (
                         <div className="truncate font-mono text-muted-foreground">
-                          {e.start}–{e.end} · {e.mode === "online" ? "Online" : "Physical"}
+                          {e.event.start}–{e.event.end}
+                          {e.event.end < e.event.start ? " (+1 day)" : ""} ·{" "}
+                          {e.mode === "online" ? "Online" : "Physical"}
                         </div>
                       )}
                     </button>
