@@ -17,6 +17,15 @@ export const TASK_TYPES = [
 export type TaskType = (typeof TASK_TYPES)[number];
 export type TaskStatus = "todo" | "in_progress" | "done" | "missed" | "deferred";
 
+/** Why marks were lost. Concept gaps and time pressure point at a topic; carelessness is a habit. */
+export const MISTAKE_CAUSES = ["concept", "careless", "time"] as const;
+export type MistakeCause = (typeof MISTAKE_CAUSES)[number];
+export const MISTAKE_CAUSE_LABEL: Record<MistakeCause, string> = {
+  concept: "Didn't know / understand it",
+  careless: "Careless slip",
+  time: "Ran out of time",
+};
+
 export interface StudyWindow {
   day: number; // 0=Sun..6=Sat
   start: string; // "HH:mm"
@@ -44,6 +53,10 @@ export interface Settings {
   weeklyGoalMin: number;
   weights: Weights;
   weakTopics: { subject: Subject; topic: string }[];
+  /** First day of the A/L exam, "yyyy-MM-dd". Drives the countdown on Today. */
+  examDate: string;
+  /** Mark the user is aiming for in each subject, as a percentage (0–100). */
+  targets: Record<Subject, number>;
 }
 
 export interface CalEvent {
@@ -117,6 +130,21 @@ export interface PaperMark {
   max: number;
 }
 
+/** One question (or part) where marks were lost, logged after a paper. */
+export interface Mistake {
+  id: string;
+  subject: Subject;
+  topic: string;
+  /** The day the paper was sat, "yyyy-MM-dd". */
+  date: string;
+  /** Marks lost on this question. Always above zero. */
+  marksLost: number;
+  cause: MistakeCause;
+  /** Which paper it came from. Free text, like `PaperMark.paperName`. */
+  paperName?: string | undefined;
+  note?: string | undefined;
+}
+
 export interface StoreData {
   version: number;
   settings: Settings;
@@ -126,4 +154,5 @@ export interface StoreData {
   blocks: PlanBlock[];
   sessions: Session[];
   marks: PaperMark[];
+  mistakes: Mistake[];
 }

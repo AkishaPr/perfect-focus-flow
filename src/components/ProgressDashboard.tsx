@@ -3,6 +3,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight, Pencil, Plus, TrendingDown, TrendingUp } from "lucide-react";
 import { PageHeader } from "@/components/AppShell";
 import { MarkDialog } from "@/components/MarkDialog";
+import { MistakeLog } from "@/components/MistakeLog";
 import { DailyBars, MarksChart, WeeklyTrend } from "@/components/ProgressCharts";
 import { SUBJECT_BG } from "@/components/subject-colors";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import { useNow } from "@/hooks/use-now";
 import { addDays, studyDayKey, studyDayStart, weekStart } from "@/lib/calendar";
 import { formatMinutes, formatPercent, formatPoints } from "@/lib/format";
+import { subjectTargets, type SubjectTarget } from "@/lib/exam";
 import { markPercent, marksBySubject, newestFirst, type SubjectMarks } from "@/lib/marks";
 import { RECENT_PAPERS } from "@/lib/planner";
 import {
@@ -51,6 +53,7 @@ export function ProgressDashboard({ now: nowOverride }: { now?: Date }) {
   const sessions = useStore((s) => s.sessions);
   const goals = useStore((s) => s.goals);
   const marks = useStore((s) => s.marks);
+  const mistakes = useStore((s) => s.mistakes);
 
   const [weeksBack, setWeeksBack] = useState(0);
   const thisMonday = weekStart(studyDayStart(now));
@@ -116,6 +119,7 @@ export function ProgressDashboard({ now: nowOverride }: { now?: Date }) {
         />
         <Work work={work} attention={attention} isCurrent={weeksBack === 0} />
         <PaperMarks marks={marks} now={now} />
+        <MistakeLog mistakes={mistakes} now={now} />
       </div>
     </>
   );
@@ -374,7 +378,12 @@ function Work({
 function PaperMarks({ marks, now }: { marks: PaperMark[]; now: Date }) {
   const [editing, setEditing] = useState<{ mark: PaperMark; isNew: boolean } | null>(null);
   const [showAll, setShowAll] = useState(false);
+  const settings = useStore((s) => s.settings);
   const bySubject = useMemo(() => marksBySubject(marks), [marks]);
+  const targets = useMemo(
+    () => subjectTargets(marks, settings.targets, now, settings.examDate),
+    [marks, settings.targets, settings.examDate, now],
+  );
   const sorted = useMemo(() => [...marks].sort(newestFirst), [marks]);
   const shown = showAll ? sorted : sorted.slice(0, SHOWN_MARKS);
   const subjectsWithMarks = bySubject.filter((s) => s.count > 0).length;
@@ -400,7 +409,11 @@ function PaperMarks({ marks, now }: { marks: PaperMark[]; now: Date }) {
         <div className="space-y-4">
           <div className="grid gap-4 md:grid-cols-3">
             {bySubject.map((s) => (
-              <SubjectCard key={s.subject} s={s} />
+              <SubjectCard
+                key={s.subject}
+                s={s}
+                goal={targets.find((t) => t.subject === s.subject)}
+              />
             ))}
           </div>
           {subjectsWithMarks === 1 && (
@@ -479,7 +492,36 @@ function PaperMarks({ marks, now }: { marks: PaperMark[]; now: Date }) {
   );
 }
 
-function SubjectCard({ s }: { s: SubjectMarks }) {
+/** How far a subject's recent average is from the target set in Settings. */
+function TargetLine({ goal }: { goal: SubjectTarget }) {
+  const target = formatPercent(goal.target);
+  if (goal.gap === null) {
+    return <p className="mt-3 text-sm text-muted-foreground">Target {target}</p>;
+  }
+  if (goal.gap === 0) {
+    return (
+      <p className="mt-3 text-sm">
+        <span className="text-muted-foreground">Target {target}:</span> reached on your recent
+        average
+      </p>
+    );
+  }
+  return (
+    <div className="mt-3 text-sm">
+      <p>
+        <span className="text-muted-foreground">Target {target}:</span> {formatPoints(goal.gap)}{" "}
+        points to go
+      </p>
+      {goal.perMonth !== null && (
+        <p className="text-xs text-muted-foreground">
+          About +{formatPoints(goal.perMonth)} points a month to get there by the exam
+        </p>
+      )}
+    </div>
+  );
+}
+
+function SubjectCard({ s, goal }: { s: SubjectMarks; goal?: SubjectTarget | undefined }) {
   const label = SUBJECT_LABEL[s.subject];
   let change: ReactNode = null;
   if (s.change !== null) {
@@ -499,7 +541,10 @@ function SubjectCard({ s }: { s: SubjectMarks }) {
         {label}
       </h3>
       {s.count === 0 ? (
-        <p className="mt-3 text-sm text-muted-foreground">No papers recorded yet.</p>
+        <>
+          <p className="mt-3 text-sm text-muted-foreground">No papers recorded yet.</p>
+          {goal && <TargetLine goal={goal} />}
+        </>
       ) : (
         <>
           <p className="mt-2 text-3xl font-medium">{formatPercent(s.latestPct!)}</p>
@@ -516,6 +561,7 @@ function SubjectCard({ s }: { s: SubjectMarks }) {
             </p>
           )}
           {change && <p className="mt-1 text-xs text-muted-foreground">{change}</p>}
+          {goal && <TargetLine goal={goal} />}
           {s.plannerBoost && s.gapToBest !== null && (
             <p className="mt-3 rounded-md border border-warning/50 bg-warning/10 px-2.5 py-1.5 text-xs">
               About {formatPoints(s.gapToBest)} points behind your strongest subject, so the planner

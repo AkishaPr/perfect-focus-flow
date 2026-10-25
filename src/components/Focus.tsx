@@ -73,14 +73,16 @@ function Idle({ now }: { now: Date }) {
   const blocks = useStore((s) => s.blocks);
   const sessions = useStore((s) => s.sessions);
   const marks = useStore((s) => s.marks);
+  const mistakes = useStore((s) => s.mistakes);
   const begin = useTimer((s) => s.begin);
   const [choice, setChoice] = useState<string | null>(null);
 
   const step = Math.floor(now.getTime() / PLAN_STEP_MS);
   const planNow = useMemo(() => new Date(step * PLAN_STEP_MS), [step]);
   const view = useMemo(
-    () => buildToday({ settings, events, tasks, goals, blocks, sessions, marks }, planNow),
-    [settings, events, tasks, goals, blocks, sessions, marks, planNow],
+    () =>
+      buildToday({ settings, events, tasks, goals, blocks, sessions, marks, mistakes }, planNow),
+    [settings, events, tasks, goals, blocks, sessions, marks, mistakes, planNow],
   );
 
   const open = tasks.filter((t) => t.status !== "done" && t.status !== "deferred");

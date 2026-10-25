@@ -9,9 +9,23 @@ import {
 } from "./focus/segments";
 import { resolveMissedState, type Decision } from "./planner/recovery";
 import { describeReport, isCleanReport, sanitizeStoreData, type MigrationReport } from "./schema";
-import type { CalEvent, Goal, PaperMark, PlanBlock, Settings, StoreData, Task } from "./types";
+import type {
+  CalEvent,
+  Goal,
+  Mistake,
+  PaperMark,
+  PlanBlock,
+  Settings,
+  StoreData,
+  Task,
+} from "./types";
 
-export const STORE_VERSION = 1;
+/**
+ * v2 added `settings.examDate`, `settings.targets` and the `mistakes` collection. All are additive:
+ * a v1 backup loads fine and gets defaults. The bump exists so a v2 backup is refused by a v1 app
+ * (which would otherwise silently drop the new data) instead of losing it unnoticed.
+ */
+export const STORE_VERSION = 2;
 
 export const defaultSettings = (): Settings => ({
   timezone: "Asia/Colombo",
@@ -32,6 +46,8 @@ export const defaultSettings = (): Settings => ({
   weeklyGoalMin: 1800,
   weights: { deadline: 30, overdue: 20, importance: 20, weakTopic: 15, goal: 10, carryOver: 5 },
   weakTopics: [],
+  examDate: "2027-08-03",
+  targets: { maths: 78, physics: 78, ict: 85 },
 });
 
 const emptyData = (): StoreData => ({
@@ -43,6 +59,7 @@ const emptyData = (): StoreData => ({
   blocks: [],
   sessions: [],
   marks: [],
+  mistakes: [],
 });
 
 /**
@@ -85,6 +102,9 @@ interface Actions {
   /** Stage 8: add or update a paper mark. The planner reads marks to spot weaker subjects. */
   upsertMark: (m: PaperMark) => void;
   deleteMark: (id: string) => void;
+  /** Log a mistake from a paper. The planner reads recent ones to find weak topics. */
+  upsertMistake: (m: Mistake) => void;
+  deleteMistake: (id: string) => void;
   /** Stage 7: apply the user's choices for missed work (carry over, skip, defer, done). */
   resolveMissed: (decisions: Decision[], now?: Date) => void;
 }
@@ -273,6 +293,8 @@ export const useStore = create<StoreData & Actions>()(
       markTaskInProgress: (taskId) => set((s) => ({ tasks: markInProgress(s.tasks, taskId) })),
       upsertMark: (m) => set((s) => ({ marks: upsert(s.marks, m) })),
       deleteMark: (id) => set((s) => ({ marks: s.marks.filter((x) => x.id !== id) })),
+      upsertMistake: (m) => set((s) => ({ mistakes: upsert(s.mistakes, m) })),
+      deleteMistake: (id) => set((s) => ({ mistakes: s.mistakes.filter((x) => x.id !== id) })),
       resolveMissed: (decisions, now) =>
         set((s) => resolveMissedState(s, decisions, now ?? new Date())),
     }),
@@ -317,6 +339,7 @@ export function exportData(): StoreData {
     blocks: s.blocks,
     sessions: s.sessions,
     marks: s.marks,
+    mistakes: s.mistakes,
   };
 }
 

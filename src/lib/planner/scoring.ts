@@ -1,7 +1,8 @@
 import { addDays, studyDayStart } from "../calendar";
 import { goalProgress } from "../goals";
-import type { Goal, PaperMark, Session, Settings, Subject, Task } from "../types";
+import type { Goal, Mistake, PaperMark, Session, Settings, Subject, Task } from "../types";
 import { clamp01, daysBetween, parseYmd, startOfDay, ymd } from "./dates";
+import { autoWeakTopics, mergeWeakTopics, normTopic } from "./mistakes";
 import type { FactorKey, Factors, ScoreBreakdown } from "./types";
 
 export const FACTOR_KEYS: FactorKey[] = [
@@ -77,6 +78,8 @@ export function buildScoringContext(args: {
   tasks: Task[];
   goals: Goal[];
   marks: PaperMark[];
+  /** The mistake log. Optional so callers without one (and older tests) keep working. */
+  mistakes?: Mistake[];
 }): ScoringContext {
   const today = studyDayStart(args.now);
   const todayStr = ymd(today);
@@ -90,13 +93,17 @@ export function buildScoringContext(args: {
   return {
     today,
     weights: args.settings.weights,
-    weakTopics: args.settings.weakTopics,
+    // Topics named in Settings, plus the ones the recent mistake log points at.
+    weakTopics: mergeWeakTopics(
+      args.settings.weakTopics,
+      autoWeakTopics(args.mistakes ?? [], args.now),
+    ),
     goalNeed,
     subjectWeakness: subjectWeakness(args.marks),
   };
 }
 
-const norm = (s: string) => s.trim().toLowerCase();
+const norm = normTopic;
 
 /** True when the user has flagged this task's topic as weak in Settings. */
 export const isWeakTopic = (task: Task, ctx: Pick<ScoringContext, "weakTopics">) =>
