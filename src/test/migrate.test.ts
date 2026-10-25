@@ -97,6 +97,18 @@ describe("migrate: accepts and normalises real data", () => {
       marks: [
         { id: "m1", subject: "ict", paperName: "2019 P1", date: "2026-09-01", score: 55, max: 100 },
       ],
+      mistakes: [
+        {
+          id: "x1",
+          subject: "maths",
+          topic: "Vectors",
+          date: "2026-10-12",
+          marksLost: 4,
+          cause: "concept",
+          paperName: "2024 P1 Q7",
+          note: "Draw the diagram first",
+        },
+      ],
     };
     const { data, report } = migrateWithReport(JSON.parse(JSON.stringify(full)));
     expect(data).toEqual(full);
@@ -233,5 +245,79 @@ describe("migrate: skips bad entries and reports them", () => {
       ],
     });
     expect(data.marks.map((m) => m.id)).toEqual(["m2"]);
+  });
+});
+
+describe("migrate: exam settings and mistakes (store v2)", () => {
+  const mistake = (over: Record<string, unknown> = {}) => ({
+    id: "x1",
+    subject: "maths",
+    topic: "Vectors",
+    date: "2026-10-12",
+    marksLost: 4,
+    cause: "concept",
+    ...over,
+  });
+
+  it("loads a v1 backup and fills the new settings and collection from defaults", () => {
+    const { data, report } = migrateWithReport({
+      version: 1,
+      settings: { wake: "06:00" },
+      tasks: [task()],
+    });
+    expect(data.version).toBe(STORE_VERSION);
+    expect(data.settings.examDate).toBe(defaultSettings().examDate);
+    expect(data.settings.targets).toEqual(defaultSettings().targets);
+    expect(data.mistakes).toEqual([]);
+    expect(isCleanReport(report)).toBe(true);
+  });
+
+  it("refuses a backup from a newer version than this one", () => {
+    expect(() => migrate({ version: STORE_VERSION + 1, mistakes: [] })).toThrow(/newer version/);
+  });
+
+  it("keeps a valid exam date and targets", () => {
+    const data = migrate({
+      settings: { examDate: "2027-09-01", targets: { maths: 90, physics: 70, ict: 60 } },
+    });
+    expect(data.settings.examDate).toBe("2027-09-01");
+    expect(data.settings.targets).toEqual({ maths: 90, physics: 70, ict: 60 });
+  });
+
+  it("resets a bad exam date and bad targets one by one, and says so", () => {
+    const { data, report } = migrateWithReport({
+      settings: { examDate: "2027-02-31", targets: { maths: 150, physics: 70, ict: "high" } },
+    });
+    const d = defaultSettings();
+    expect(data.settings.examDate).toBe(d.examDate);
+    expect(data.settings.targets).toEqual({
+      maths: d.targets.maths,
+      physics: 70,
+      ict: d.targets.ict,
+    });
+    const text = describeReport(report).join(" ");
+    expect(text).toMatch(/examDate/);
+    expect(text).toMatch(/target for "maths"/);
+    expect(text).toMatch(/target for "ict"/);
+  });
+
+  it("treats a backup holding only mistakes as a backup", () => {
+    expect(migrate({ mistakes: [mistake()] }).mistakes).toHaveLength(1);
+  });
+
+  it("drops invalid and duplicate mistakes but keeps the good ones", () => {
+    const { data, report } = migrateWithReport({
+      mistakes: [
+        mistake(),
+        mistake({ id: "x2", marksLost: 0 }),
+        mistake({ id: "x3", cause: "lazy" }),
+        mistake({ id: "x4", topic: "   " }),
+        mistake({ id: "x5", date: "2026-13-01" }),
+        mistake({ id: "x1", topic: "Duplicate id" }),
+        "nope",
+      ],
+    });
+    expect(data.mistakes.map((m) => m.id)).toEqual(["x1"]);
+    expect(report.dropped["mistakes"]).toBe(6);
   });
 });

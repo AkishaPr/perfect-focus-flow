@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { AlertTriangle, Check, Play, Plus, Timer, Undo2 } from "lucide-react";
 import { PageHeader } from "@/components/AppShell";
+import { ExamCountdown } from "@/components/ExamCountdown";
 import { ProgressRing } from "@/components/ProgressRing";
 import { StarRating } from "@/components/StarRating";
 import { Recovery } from "@/components/Recovery";
@@ -339,6 +340,7 @@ export function Today({ now: nowOverride }: { now?: Date }) {
   const blocks = useStore((s) => s.blocks);
   const sessions = useStore((s) => s.sessions);
   const marks = useStore((s) => s.marks);
+  const mistakes = useStore((s) => s.mistakes);
   const startBlock = useStore((s) => s.startBlock);
   const releaseBlock = useStore((s) => s.releaseBlock);
   const completeBlock = useStore((s) => s.completeBlock);
@@ -347,8 +349,9 @@ export function Today({ now: nowOverride }: { now?: Date }) {
   const step = Math.floor(now.getTime() / PLAN_STEP_MS);
   const planNow = useMemo(() => new Date(step * PLAN_STEP_MS), [step]);
   const view = useMemo(
-    () => buildToday({ settings, events, tasks, goals, blocks, sessions, marks }, planNow),
-    [settings, events, tasks, goals, blocks, sessions, marks, planNow],
+    () =>
+      buildToday({ settings, events, tasks, goals, blocks, sessions, marks, mistakes }, planNow),
+    [settings, events, tasks, goals, blocks, sessions, marks, mistakes, planNow],
   );
   const { active, next, stats, timeline } = view;
 
@@ -415,6 +418,7 @@ export function Today({ now: nowOverride }: { now?: Date }) {
           </Button>
         }
       />
+      <ExamCountdown now={now} />
       <Recovery
         items={review.items}
         onResolve={(d) => resolveReview(d, view.date, now)}

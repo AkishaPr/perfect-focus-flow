@@ -17,6 +17,8 @@ export const makeSettings = (over: Partial<Settings> = {}): Settings => ({
   weeklyGoalMin: 1800,
   weights: { deadline: 30, overdue: 20, importance: 20, weakTopic: 15, goal: 10, carryOver: 5 },
   weakTopics: [],
+  examDate: "2027-08-03",
+  targets: { maths: 78, physics: 78, ict: 85 },
   ...over,
 });
 

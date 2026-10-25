@@ -51,6 +51,19 @@ export {
   subjectWeakness,
 } from "./scoring";
 export { sessionDate, studiedMinOn } from "./studied";
+export {
+  autoWeakTopics,
+  MIN_MARKS_LOST,
+  MISTAKE_WINDOW_DAYS,
+  mergeWeakTopics,
+  mistakeError,
+  normTopic,
+  recentMistakes,
+  TOPICS_PER_SUBJECT,
+  topicLosses,
+  type TopicLoss,
+  windowStart,
+} from "./mistakes";
 
 interface Candidate {
   task: Task;
@@ -169,6 +182,7 @@ export function generatePlan(input: PlannerInput): PlanResult {
     tasks: input.tasks,
     goals: input.goals,
     marks: input.marks,
+    mistakes: input.mistakes ?? [],
   });
   const unscheduled: UnscheduledTask[] = [];
   const warnings: PlannerWarning[] = [];

@@ -68,10 +68,10 @@ export function resolveOptions(o: PlannerOptions = {}): ResolvedOptions {
 }
 
 /** Everything the planner reads. `Pick<StoreData, …>` so `useStore.getState()` can be passed straight in. */
-export interface PlannerInput extends Pick<
-  StoreData,
-  "settings" | "events" | "tasks" | "goals" | "blocks" | "sessions" | "marks"
-> {
+export interface PlannerInput
+  extends
+    Pick<StoreData, "settings" | "events" | "tasks" | "goals" | "blocks" | "sessions" | "marks">,
+    Partial<Pick<StoreData, "mistakes">> {
   now: Date;
   options?: PlannerOptions;
 }

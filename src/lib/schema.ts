@@ -1,10 +1,12 @@
 import { z } from "zod";
 import { toMin } from "./calendar";
 import {
+  MISTAKE_CAUSES,
   SUBJECTS,
   TASK_TYPES,
   type CalEvent,
   type Goal,
+  type Mistake,
   type PaperMark,
   type PlanBlock,
   type Session,
@@ -117,6 +119,17 @@ export const markSchema = z
   })
   .refine((m) => m.score <= m.max, "score exceeds max");
 
+export const mistakeSchema = z.object({
+  id,
+  subject,
+  topic: z.string().refine((t) => t.trim().length > 0, "Topic is empty"),
+  date: dateStr,
+  marksLost: z.number().finite().positive(),
+  cause: z.enum(MISTAKE_CAUSES),
+  paperName: z.string().optional(),
+  note: z.string().optional(),
+});
+
 const windowSchema = z
   .object({ day: z.number().int().min(0).max(6), start: timeStr, end: timeStr })
   .refine((w) => toMin(w.end) > toMin(w.start), "window must end after it starts");
@@ -131,7 +144,9 @@ const SCALAR_SETTINGS = {
   maxDailyStudyMin: nonNeg,
   dailyGoalMin: nonNeg,
   weeklyGoalMin: nonNeg,
+  examDate: dateStr,
 } as const;
+const percent = z.number().finite().min(0).max(100);
 const WEIGHT_KEYS = [
   "deadline",
   "overdue",
@@ -149,6 +164,7 @@ export const DATA_KEYS = [
   "blocks",
   "sessions",
   "marks",
+  "mistakes",
 ] as const;
 
 export interface MigrationReport {
@@ -263,6 +279,18 @@ export function sanitizeStoreData(
     }
   }
   out["weights"] = weights;
+  const rt = isObj(rs["targets"]) ? rs["targets"] : {};
+  const targets: Record<string, number> = {};
+  for (const sub of SUBJECTS) {
+    const r = percent.safeParse(rt[sub]);
+    if (r.success) targets[sub] = r.data;
+    else {
+      targets[sub] = base.settings.targets[sub];
+      if (rt[sub] !== undefined)
+        report.repaired.push(`target for "${sub}" was invalid and was reset`);
+    }
+  }
+  out["targets"] = targets;
   if (rs["studyWindows"] === undefined) out["studyWindows"] = base.settings.studyWindows;
   else {
     const w = parseList(rs["studyWindows"], windowSchema);
@@ -283,12 +311,14 @@ export function sanitizeStoreData(
   const blocks = parseList(raw["blocks"], blockSchema, { uniqueIds: true });
   const sessions = parseList(raw["sessions"], sessionSchema, { uniqueIds: true });
   const marks = parseList(raw["marks"], markSchema, { uniqueIds: true });
+  const mistakes = parseList(raw["mistakes"], mistakeSchema, { uniqueIds: true });
   drop("events", events.dropped);
   drop("tasks", tasks.dropped);
   drop("goals", goals.dropped);
   drop("blocks", blocks.dropped);
   drop("sessions", sessions.dropped);
   drop("marks", marks.dropped);
+  drop("mistakes", mistakes.dropped);
 
   // A task pointing at a goal that no longer exists would show a blank goal picker: clear the link.
   // (Blocks/sessions for deleted tasks are deliberately kept: they are study history.)
@@ -317,7 +347,7 @@ export function sanitizeStoreData(
     blocks: blocks.items as unknown as PlanBlock[],
     sessions: sessions.items as unknown as Session[],
     marks: marks.items as unknown as PaperMark[],
+    mistakes: mistakes.items as unknown as Mistake[],
   };
   return { data, report };
 }
-

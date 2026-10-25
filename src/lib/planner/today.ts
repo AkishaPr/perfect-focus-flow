@@ -15,7 +15,8 @@ import type {
 export type TodayData = Pick<
   StoreData,
   "settings" | "events" | "tasks" | "goals" | "blocks" | "sessions" | "marks"
->;
+> &
+  Partial<Pick<StoreData, "mistakes">>;
 
 export type BlockState = "planned" | "active" | "pinned";
 

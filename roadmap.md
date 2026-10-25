@@ -10,3 +10,5 @@
 - [x] 7. Missed-task recovery flow
 - [x] 8. Progress dashboard + paper marks
 - [ ] 9. Polish
+- [x] 10. Exam countdown + per-subject target marks (store v2)
+- [x] 11. Mistake log by topic, feeding the planner's weak topics

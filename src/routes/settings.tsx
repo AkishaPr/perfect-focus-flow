@@ -8,9 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { useNow } from "@/hooks/use-now";
+import { autoWeakTopics } from "@/lib/planner";
 import { setSoundEnabled, useSoundEnabled } from "@/lib/sound";
 import { exportData, migrateWithReport, useStore, defaultSettings } from "@/lib/store";
-import { InvalidBackupError, describeReport } from "@/lib/schema";
+import { InvalidBackupError, describeReport, isRealDate } from "@/lib/schema";
 import {
   SUBJECTS,
   SUBJECT_LABEL,
@@ -70,6 +72,9 @@ function SettingsPage() {
   const settings = useStore((s) => s.settings);
   const update = useStore((s) => s.updateSettings);
   const replaceAll = useStore((s) => s.replaceAll);
+  const mistakes = useStore((s) => s.mistakes);
+  const now = useNow();
+  const fromMistakes = autoWeakTopics(mistakes, now);
   const fileRef = useRef<HTMLInputElement>(null);
   const soundOn = useSoundEnabled();
   const [pending, setPending] = useState<StoreData | null>(null);
@@ -178,6 +183,45 @@ function SettingsPage() {
             <Field label="Weekly goal (min)">
               <Input type="number" value={settings.weeklyGoalMin} onChange={num("weeklyGoalMin")} />
             </Field>
+          </div>
+        </Section>
+
+        <Section title="Exam & targets">
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="First day of the A/L">
+              <Input
+                type="date"
+                value={settings.examDate}
+                onChange={(e) => {
+                  // A cleared or half-typed date is ignored, so a bad value is never saved.
+                  if (isRealDate(e.target.value)) update({ examDate: e.target.value });
+                }}
+              />
+            </Field>
+          </div>
+          <p className="mb-3 mt-5 text-xs text-muted-foreground">
+            The mark you are aiming for in each subject (%). Progress shows how far your recent
+            papers are from it.
+          </p>
+          <div className="grid grid-cols-3 gap-4">
+            {SUBJECTS.map((sub) => (
+              <Field key={sub} label={`${SUBJECT_LABEL[sub]} target (%)`}>
+                <Input
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={settings.targets[sub]}
+                  onChange={(e) =>
+                    update({
+                      targets: {
+                        ...settings.targets,
+                        [sub]: Math.min(100, Math.max(0, Number(e.target.value) || 0)),
+                      },
+                    })
+                  }
+                />
+              </Field>
+            ))}
           </div>
         </Section>
 
@@ -293,6 +337,23 @@ function SettingsPage() {
               </button>
             ))}
           </div>
+          {fromMistakes.length > 0 && (
+            <div className="mb-3">
+              <p className="mb-1.5 text-xs text-muted-foreground">
+                Also treated as weak, from your mistake log (last 4 weeks):
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {fromMistakes.map((t) => (
+                  <span
+                    key={`${t.subject}-${t.topic}`}
+                    className="rounded-full border border-dashed px-3 py-1 text-xs text-muted-foreground"
+                  >
+                    {SUBJECT_LABEL[t.subject]} · {t.topic}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
           <form
             className="flex gap-2"
             onSubmit={(e) => {
