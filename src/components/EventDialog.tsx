@@ -10,7 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { uid, useStore } from "@/lib/store";
-import { toMin } from "@/lib/calendar";
+import { fromMin, toMin } from "@/lib/calendar";
 import { SUBJECTS, SUBJECT_LABEL, type CalEvent } from "@/lib/types";
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -34,11 +34,13 @@ export function EventDialog({
   const isNew = !useStore.getState().events.some((x) => x.id === e.id);
   const err = !e.title.trim()
     ? "Add a title."
-    : toMin(e.end) <= toMin(e.start)
-      ? "End must be after start (no crossing midnight)."
-      : e.recurrence === "none" && !e.date
-        ? "Pick a date for a one-time event."
-        : null;
+    : !/^([01]\d|2[0-3]):[0-5]\d$/.test(e.start) || !/^([01]\d|2[0-3]):[0-5]\d$/.test(e.end)
+      ? "Pick valid start and end times."
+      : e.end === e.start
+        ? "Start and end must be different."
+        : e.recurrence === "none" && !e.date
+          ? "Pick a date for a one-time event."
+          : null;
   const set = (p: Partial<CalEvent>) => setE({ ...e, ...p });
 
   return (
@@ -154,6 +156,9 @@ export function EventDialog({
             <Input type="time" value={e.end} onChange={(x) => set({ end: x.target.value })} />
           </div>
         </div>
+        {!err && toMin(e.end) < toMin(e.start) && (
+          <p className="text-xs text-muted-foreground">Ends the following day at {e.end}.</p>
+        )}
         {err && <p className="text-xs text-destructive">{err}</p>}
         <DialogFooter className="gap-2">
           {!isNew && (
@@ -195,5 +200,5 @@ export const blankEvent = (date: Date, start: string): CalEvent => ({
   weekday: date.getDay(),
   date: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`,
   start,
-  end: `${String(Math.min(23, Number(start.slice(0, 2)) + 2)).padStart(2, "0")}:${start.slice(3)}`,
+  end: fromMin((toMin(start) + 120) % 1440),
 });

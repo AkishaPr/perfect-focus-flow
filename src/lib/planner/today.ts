@@ -1,4 +1,4 @@
-import { dayMin, eventsOn, studyDayKey, studyDayStart, studyMinute } from "../calendar";
+import { dayMin, studyDayEvents, studyDayKey, studyDayStart, studyMinute } from "../calendar";
 import type { CalEvent, PlanBlock, StoreData, Task } from "../types";
 import { startOfDay } from "./dates";
 import { generatePlan } from "./index";
@@ -129,8 +129,14 @@ export function buildToday(data: TodayData, now: Date, options: PlannerOptions =
 
   // ---- today's timeline: classes, finished work, active work, and what's planned ----
   const timeline: TimelineEntry[] = [];
-  for (const e of eventsOn(data.events, studyDayStart(now))) {
-    timeline.push({ kind: "event", key: `event:${e.id}`, start: e.start, end: e.end, event: e });
+  for (const e of studyDayEvents(data.events, studyDayStart(now))) {
+    timeline.push({
+      kind: "event",
+      key: `event:${e.id}`,
+      start: e.start,
+      end: e.end,
+      event: e.event,
+    });
   }
   const doneToday = data.blocks.filter(
     (b) => b.date === todayStr && (b.status === "done" || b.status === "partial"),

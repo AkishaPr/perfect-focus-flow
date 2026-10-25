@@ -4,7 +4,7 @@ import {
   createRootRoute,
   createRouter,
 } from "@tanstack/react-router";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Route } from "@/routes/week";
 import { useStore } from "@/lib/store";
@@ -136,5 +136,40 @@ describe("week timetable", () => {
     for (const label of ["23:00", "00:00", "01:00", "02:00"]) {
       expect(screen.getByText(label)).toBeInTheDocument();
     }
+  });
+});
+
+describe("overnight timetable", () => {
+  it("draws the complete Sunday class and opens the original event when editing", async () => {
+    useStore.setState({
+      events: [
+        makeEvent({
+          id: "overnight",
+          title: "Late Physics",
+          weekday: 0,
+          start: "23:09",
+          end: "02:29",
+        }),
+      ],
+    });
+    await renderWeek();
+    const sunday = screen.getByRole("group", { name: "Sunday 25" });
+    const event = within(sunday).getByRole("button", { name: /Late Physics/ });
+    expect(event.style.height).toBe("200px");
+    expect(event.title).toContain("23:09–02:29 (+1 day)");
+    fireEvent.click(event);
+    expect(screen.getByDisplayValue("23:09")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("02:29")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save" })).toBeEnabled();
+  });
+
+  it("creates a Monday event when clicking Sunday after midnight", async () => {
+    await renderWeek();
+    const sunday = screen.getByRole("group", { name: "Sunday 25" });
+    // 01:00 next morning, relative to the column's 03:00 start.
+    fireEvent.click(sunday, { clientY: (25 - 3) * 60 });
+    expect(screen.getByDisplayValue("01:00")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("03:00")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Monday")).toBeInTheDocument();
   });
 });
